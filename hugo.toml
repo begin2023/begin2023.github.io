@@ -1,4 +1,4 @@
-baseURL = 'https://你的github用户名.github.io/'
+baseURL = 'https://begin2023.github.io/'
 languageCode = 'zh-cn'
 title = '我的博客'
 theme = 'PaperMod'
