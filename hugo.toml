@@ -4,8 +4,13 @@ title = '我的博客'
 theme = 'PaperMod'
 
 [params]
-  # 主题配置
-  defaultTheme = "auto"
-  ShowReadingTime = true
-  ShowShareButtons = true
-  ShowPostNavLinks = true
+defaultTheme = "auto"
+ShowReadingTime = true
+ShowShareButtons = true
+ShowPostNavLinks = true
+
+[menu]
+main = [
+    {identifier = "posts", name = "文章", url = "/posts/", weight = 10},
+    {identifier = "archives", name = "归档", url = "/archives/", weight = 20},
+]
