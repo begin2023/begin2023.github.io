@@ -430,14 +430,17 @@ class SudokuGame {
     }
 
     isValidPlacement(board, row, col, num) {
+        // 检查行
         for (let c = 0; c < 9; c++) {
             if (board[row * 9 + c] === num) return false;
         }
 
+        // 检查列
         for (let r = 0; r < 9; r++) {
             if (board[r * 9 + col] === num) return false;
         }
 
+        // 检查宫格
         const boxRow = Math.floor(row / 3) * 3;
         const boxCol = Math.floor(col / 3) * 3;
         for (let r = boxRow; r < boxRow + 3; r++) {
@@ -446,7 +449,40 @@ class SudokuGame {
             }
         }
 
+        // 杀手数独：检查笼子约束
+        if (this.gameMode === 'killer' && this.cages.length > 0) {
+            const cellIndex = row * 9 + col;
+            const cage = this.findCage(cellIndex);
+
+            if (cage) {
+                // 规则1：同笼子内不能有相同的数字
+                for (const cellIdx of cage.cells) {
+                    if (cellIdx !== cellIndex && board[cellIdx] === num) {
+                        return false;
+                    }
+                }
+
+                // 规则2：笼子数字之和不能超过指定值
+                let currentSum = 0;
+                for (const cellIdx of cage.cells) {
+                    currentSum += board[cellIdx];
+                }
+                if (currentSum + num > cage.sum) {
+                    return false;
+                }
+            }
+        }
+
         return true;
+    }
+
+    findCage(cellIndex) {
+        for (const cage of this.cages) {
+            if (cage.cells.includes(cellIndex)) {
+                return cage;
+            }
+        }
+        return null;
     }
 
     hasUniqueSolution(board) {
