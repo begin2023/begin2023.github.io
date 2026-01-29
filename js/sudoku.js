@@ -98,6 +98,7 @@ class SudokuGame {
         this.completedRows = new Set();
         this.completedCols = new Set();
         this.completedBoxes = new Set();
+        this.hintCells = new Set();
 
         this.difficultySettings = {
             easy: { remove: 35, hints: 5 },
@@ -236,6 +237,7 @@ class SudokuGame {
         this.completedRows.clear();
         this.completedCols.clear();
         this.completedBoxes.clear();
+        this.hintCells.clear();
 
         this.generatePuzzle();
         this.renderBoard();
@@ -733,6 +735,7 @@ class SudokuGame {
             // 自动填入答案
             this.board[hintInfo.cell] = hintInfo.value;
             this.notes[hintInfo.cell].clear();
+            this.hintCells.add(hintInfo.cell); // 标记为提示填入
 
             // 检测完成并播放音效/特效
             const completionLevel = this.checkCompletion(hintInfo.cell);
@@ -813,11 +816,14 @@ class SudokuGame {
         cells.forEach((cell, index) => {
             const value = this.board[index];
             const isGiven = this.initialBoard[index] !== 0;
+            const isHint = this.hintCells.has(index);
 
             cell.className = 'sudoku-cell';
 
             if (isGiven) {
                 cell.classList.add('given');
+            } else if (isHint) {
+                cell.classList.add('hint-input');
             } else if (value !== 0) {
                 cell.classList.add('user-input');
             }
