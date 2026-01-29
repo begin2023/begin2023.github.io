@@ -1,0 +1,103 @@
+{{ define "main" }}
+<article class="post-single">
+  <header class="post-header">
+    <h1 class="post-title">数独游戏</h1>
+  </header>
+  <div class="post-content">
+    <link rel="stylesheet" href="/css/sudoku.css">
+
+    <div class="sudoku-container">
+      <!-- 游戏控制区 -->
+      <div class="game-controls">
+        <div class="difficulty-selector">
+          <span class="diff-label">难度：</span>
+          <button class="diff-btn active" data-difficulty="easy">简单</button>
+          <button class="diff-btn" data-difficulty="medium">中等</button>
+          <button class="diff-btn" data-difficulty="hard">困难</button>
+          <button class="diff-btn" data-difficulty="expert">专家</button>
+        </div>
+        <button class="new-game-btn" id="newGameBtn">新游戏</button>
+      </div>
+
+      <!-- 游戏状态 -->
+      <div class="game-stats">
+        <div class="stat-item">
+          <span class="stat-label">用时</span>
+          <span class="stat-value" id="timer">00:00</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">提示</span>
+          <span class="stat-value" id="hintsLeft">3</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">错误</span>
+          <span class="stat-value" id="mistakes">0/3</span>
+        </div>
+      </div>
+
+      <!-- 数独棋盘 -->
+      <div class="sudoku-board" id="sudokuBoard"></div>
+
+      <!-- 数字输入面板 -->
+      <div class="number-pad">
+        <button class="num-btn" data-num="1">1</button>
+        <button class="num-btn" data-num="2">2</button>
+        <button class="num-btn" data-num="3">3</button>
+        <button class="num-btn" data-num="4">4</button>
+        <button class="num-btn" data-num="5">5</button>
+        <button class="num-btn" data-num="6">6</button>
+        <button class="num-btn" data-num="7">7</button>
+        <button class="num-btn" data-num="8">8</button>
+        <button class="num-btn" data-num="9">9</button>
+        <button class="num-btn erase-btn" data-num="0">⌫</button>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="action-buttons">
+        <button class="action-btn" id="hintBtn">
+          <span class="btn-icon">💡</span>
+          <span>提示</span>
+        </button>
+        <button class="action-btn" id="notesBtn">
+          <span class="btn-icon">✏️</span>
+          <span>笔记</span>
+        </button>
+        <button class="action-btn" id="undoBtn">
+          <span class="btn-icon">↩️</span>
+          <span>撤销</span>
+        </button>
+      </div>
+
+      <!-- 提示面板 -->
+      <div class="hint-panel" id="hintPanel">
+        <div class="hint-content">
+          <div class="hint-header">
+            <span class="hint-icon">💡</span>
+            <span class="hint-title">提示</span>
+            <button class="hint-close" id="hintClose">×</button>
+          </div>
+          <div class="hint-body" id="hintBody"></div>
+          <div class="hint-footer">
+            <button class="hint-action-btn" id="showMoreHint">显示更多提示</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 胜利弹窗 -->
+      <div class="victory-modal" id="victoryModal">
+        <div class="victory-content">
+          <div class="victory-icon">🎉</div>
+          <h3>恭喜完成！</h3>
+          <div class="victory-stats">
+            <p>用时：<span id="finalTime">00:00</span></p>
+            <p>难度：<span id="finalDifficulty">简单</span></p>
+          </div>
+          <button class="new-game-btn" id="playAgainBtn">再来一局</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/sudoku.js"></script>
+  </div>
+</article>
+{{ end }}

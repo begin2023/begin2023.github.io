@@ -1,0 +1,65 @@
+baseURL = "https://begin2023.github.io/"
+languageCode = "zh-CN"
+title = "我的博客"
+theme = "PaperMod"
+defaultContentLanguage = "zh"
+
+[params]
+  description = "记录生活，分享技术"
+  author = "begin2023"
+  ShowReadingTime = true
+  ShowShareButtons = false
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = true
+  ShowCodeCopyButtons = true
+  ShowWordCount = true
+  ShowRssButtonInSectionTermList = true
+  UseHugoToc = true
+  disableSpecial1stPost = false
+  disableScrollToTop = false
+  comments = false
+  hidemeta = false
+  hideSummary = false
+  showtoc = true
+  tocopen = false
+  defaultTheme = "auto"
+
+  [params.homeInfoParams]
+    Title = "你好 👋"
+    Content = "欢迎来到我的博客！这里记录技术心得和生活感悟。"
+
+  [[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/begin2023"
+
+[menu]
+  [[menu.main]]
+    identifier = "home"
+    name = "首页"
+    url = "/"
+    weight = 10
+  [[menu.main]]
+    identifier = "posts"
+    name = "文章"
+    url = "/posts/"
+    weight = 20
+  [[menu.main]]
+    identifier = "sudoku"
+    name = "数独"
+    url = "/sudoku/"
+    weight = 30
+  [[menu.main]]
+    identifier = "about"
+    name = "关于"
+    url = "/about/"
+    weight = 40
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+[markup]
+  [markup.highlight]
+    codeFences = true
+    guessSyntax = true
+    lineNos = true
+    style = "monokai"

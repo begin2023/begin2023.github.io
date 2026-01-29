@@ -1,0 +1,550 @@
+/* 数独游戏样式 - 适配 PaperMod 主题 */
+
+.sudoku-container {
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+/* 游戏控制区 */
+.game-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.difficulty-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.diff-label {
+    color: var(--secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.diff-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: var(--code-bg);
+    color: var(--secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.diff-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.diff-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.new-game-btn {
+    padding: 10px 24px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.new-game-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* 游戏状态 */
+.game-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--code-bg);
+    border-radius: 8px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--secondary);
+}
+
+.stat-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* 数独棋盘 */
+.sudoku-board {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 0;
+    background: var(--border);
+    border: 2px solid var(--primary);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    aspect-ratio: 1;
+}
+
+.sudoku-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--theme);
+    font-size: clamp(1rem, 4vw, 1.3rem);
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border: 1px solid var(--border);
+    position: relative;
+    user-select: none;
+}
+
+/* 3x3 宫格边框 */
+.sudoku-cell:nth-child(3n) {
+    border-right: 2px solid var(--primary);
+}
+
+.sudoku-cell:nth-child(9n) {
+    border-right: none;
+}
+
+.sudoku-cell:nth-child(n+19):nth-child(-n+27),
+.sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+    border-bottom: 2px solid var(--primary);
+}
+
+.sudoku-cell.given {
+    background: var(--code-bg);
+    color: var(--content);
+    font-weight: 700;
+}
+
+.sudoku-cell.selected {
+    background: rgba(var(--primary-rgb, 99, 102, 241), 0.2);
+}
+
+.sudoku-cell.highlighted {
+    background: rgba(var(--primary-rgb, 99, 102, 241), 0.08);
+}
+
+.sudoku-cell.same-number {
+    background: rgba(var(--primary-rgb, 99, 102, 241), 0.15);
+}
+
+.sudoku-cell.error {
+    color: #ef4444 !important;
+    animation: shake 0.3s ease;
+}
+
+.sudoku-cell.user-input {
+    color: var(--primary);
+}
+
+.sudoku-cell.hint-target {
+    animation: hintTarget 0.8s ease;
+    background: rgba(250, 204, 21, 0.3) !important;
+}
+
+.sudoku-cell.hint-highlight {
+    animation: hintPulse 1.5s ease infinite;
+}
+
+/* 笔记模式 */
+.sudoku-cell .notes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.sudoku-cell .note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(0.4rem, 1.5vw, 0.55rem);
+    color: var(--secondary);
+    font-weight: 500;
+}
+
+/* 数字输入面板 */
+.number-pad {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.num-btn {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--content);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.num-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.num-btn.erase-btn {
+    font-size: 1rem;
+}
+
+.num-btn.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* 操作按钮 */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 16px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.action-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.action-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.btn-icon {
+    font-size: 1rem;
+}
+
+/* 提示面板 */
+.hint-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.hint-panel.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.hint-content {
+    background: var(--theme);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 360px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.hint-panel.show .hint-content {
+    transform: translateY(0);
+}
+
+.hint-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.hint-icon {
+    font-size: 1.3rem;
+}
+
+.hint-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--content);
+    flex: 1;
+}
+
+.hint-close {
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    color: var(--secondary);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.hint-close:hover {
+    color: var(--content);
+}
+
+.hint-body {
+    color: var(--secondary);
+    line-height: 1.6;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+}
+
+.hint-body .hint-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: var(--code-bg);
+    border-radius: 6px;
+    animation: fadeInUp 0.3s ease forwards;
+    opacity: 0;
+}
+
+.hint-body .hint-step:nth-child(1) { animation-delay: 0.1s; }
+.hint-body .hint-step:nth-child(2) { animation-delay: 0.3s; }
+.hint-body .hint-step:nth-child(3) { animation-delay: 0.5s; }
+
+.hint-step-number {
+    width: 20px;
+    height: 20px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.hint-step-text {
+    flex: 1;
+    font-size: 0.85rem;
+}
+
+.hint-highlight-text {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.hint-footer {
+    text-align: center;
+}
+
+.hint-action-btn {
+    padding: 8px 20px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.hint-action-btn:hover {
+    opacity: 0.9;
+}
+
+.hint-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 胜利弹窗 */
+.victory-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.victory-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.victory-content {
+    background: var(--theme);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+}
+
+.victory-modal.show .victory-content {
+    transform: scale(1);
+    animation: victoryBounce 0.5s ease;
+}
+
+.victory-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    animation: bounce 1s ease infinite;
+}
+
+.victory-content h3 {
+    font-size: 1.4rem;
+    color: var(--content);
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.victory-stats {
+    color: var(--secondary);
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.victory-stats p {
+    margin: 4px 0;
+}
+
+/* 动画 */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+@keyframes hintPulse {
+    0%, 100% {
+        background: rgba(250, 204, 21, 0.2);
+    }
+    50% {
+        background: rgba(250, 204, 21, 0.4);
+    }
+}
+
+@keyframes hintTarget {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes victoryBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* 响应式 */
+@media (max-width: 480px) {
+    .sudoku-container {
+        padding: 0;
+    }
+
+    .sudoku-cell {
+        font-size: 1rem;
+    }
+
+    .sudoku-cell .note {
+        font-size: 0.35rem;
+    }
+
+    .number-pad {
+        gap: 4px;
+    }
+
+    .num-btn {
+        font-size: 1rem;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+    }
+
+    .diff-btn {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+}
