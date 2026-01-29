@@ -167,11 +167,13 @@
 }
 
 .sudoku-cell.user-input {
-    color: #6366f1;
+    color: #6366f1 !important;
+    font-weight: 600;
 }
 
 .sudoku-cell.hint-input {
-    color: #f59e0b;
+    color: #f59e0b !important;
+    font-weight: 600;
 }
 
 .sudoku-cell.hint-target {
