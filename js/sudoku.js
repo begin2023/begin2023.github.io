@@ -580,7 +580,7 @@ class SudokuGame {
                 cellsToHighlight.forEach(idx => {
                     cells[idx].classList.remove('row-complete', 'col-complete', 'box-complete');
                 });
-            }, 1500);
+            }, 2200);
         }
     }
 
