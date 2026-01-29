@@ -2,6 +2,80 @@
  * 数独游戏
  */
 
+class SoundManager {
+    constructor() {
+        this.audioContext = null;
+        this.enabled = true;
+        this.masterGain = null;
+    }
+
+    init() {
+        if (this.audioContext) return;
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.masterGain = this.audioContext.createGain();
+        this.masterGain.gain.value = 0.3;
+        this.masterGain.connect(this.audioContext.destination);
+    }
+
+    playTone(frequency, duration, type = 'sine', volume = 0.5, delay = 0) {
+        if (!this.enabled || !this.audioContext) return;
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.masterGain);
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime + delay);
+        gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime + delay);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + delay + duration);
+
+        oscillator.start(this.audioContext.currentTime + delay);
+        oscillator.stop(this.audioContext.currentTime + delay + duration);
+    }
+
+    playSuccess(level = 1) {
+        this.init();
+
+        switch(level) {
+            case 1: // 单个数字正确
+                this.playTone(523.25, 0.15, 'sine', 0.4); // C5
+                break;
+            case 2: // 行/列/宫完成
+                this.playTone(523.25, 0.15, 'sine', 0.5); // C5
+                this.playTone(659.25, 0.15, 'sine', 0.5, 0.1); // E5
+                this.playTone(783.99, 0.3, 'sine', 0.5, 0.2); // G5
+                break;
+            case 3: // 游戏胜利
+                this.playTone(523.25, 0.2, 'sine', 0.6); // C5
+                this.playTone(659.25, 0.2, 'sine', 0.6, 0.1); // E5
+                this.playTone(783.99, 0.2, 'sine', 0.6, 0.2); // G5
+                this.playTone(1046.50, 0.4, 'sine', 0.6, 0.3); // C6
+                break;
+        }
+    }
+
+    playError() {
+        this.init();
+
+        this.playTone(200, 0.1, 'sawtooth', 0.5);
+        this.playTone(150, 0.2, 'sawtooth', 0.4, 0.05);
+    }
+
+    playHint() {
+        this.init();
+
+        this.playTone(880, 0.1, 'sine', 0.3); // A5
+        this.playTone(988, 0.15, 'sine', 0.3, 0.1); // B5
+    }
+
+    toggle() {
+        this.enabled = !this.enabled;
+        return this.enabled;
+    }
+}
+
 class SudokuGame {
     constructor() {
         this.board = [];
@@ -20,6 +94,10 @@ class SudokuGame {
         this.gameOver = false;
         this.hintLevel = 0;
         this.currentHintCell = null;
+        this.soundManager = new SoundManager();
+        this.completedRows = new Set();
+        this.completedCols = new Set();
+        this.completedBoxes = new Set();
 
         this.difficultySettings = {
             easy: { remove: 35, hints: 5 },
@@ -125,6 +203,15 @@ class SudokuGame {
             undoBtn.addEventListener('click', () => this.undo());
         }
 
+        const soundBtn = document.getElementById('soundBtn');
+        const soundIcon = document.getElementById('soundIcon');
+        if (soundBtn && soundIcon) {
+            soundBtn.addEventListener('click', () => {
+                const enabled = this.soundManager.toggle();
+                soundIcon.textContent = enabled ? '🔊' : '🔇';
+            });
+        }
+
         document.addEventListener('keydown', (e) => {
             if (e.key >= '1' && e.key <= '9') {
                 this.inputNumber(parseInt(e.key));
@@ -146,6 +233,9 @@ class SudokuGame {
         this.history = [];
         this.hintLevel = 0;
         this.currentHintCell = null;
+        this.completedRows.clear();
+        this.completedCols.clear();
+        this.completedBoxes.clear();
 
         this.generatePuzzle();
         this.renderBoard();
@@ -276,17 +366,37 @@ class SudokuGame {
                     this.updateStats();
 
                     const cells = document.querySelectorAll('.sudoku-cell');
-                    cells[this.selectedCell].classList.add('error');
+                    const cell = cells[this.selectedCell];
+
+                    // 播放错误音效
+                    this.soundManager.playError();
+
+                    // 添加更明显的错误提示效果
+                    cell.classList.add('error');
+
+                    // 显示错误动画后，清空错误输入
                     setTimeout(() => {
-                        cells[this.selectedCell].classList.remove('error');
-                    }, 500);
+                        cell.classList.remove('error');
+                        cell.classList.add('error-clear');
+                        this.board[this.selectedCell] = 0;
+                        setTimeout(() => {
+                            cell.classList.remove('error-clear');
+                            this.renderBoard();
+                        }, 300);
+                    }, 800);
 
                     if (this.mistakes >= this.maxMistakes) {
                         this.endGame(false);
                         return;
                     }
                 } else {
+                    // 正确填入
                     this.removeRelatedNotes(this.selectedCell, num);
+
+                    // 检测是否有行/列/宫完成
+                    const completionLevel = this.checkCompletion(this.selectedCell);
+                    this.soundManager.playSuccess(completionLevel);
+                    this.showCompletionEffect(this.selectedCell, completionLevel);
                 }
             }
         }
@@ -325,8 +435,122 @@ class SudokuGame {
         this.renderBoard();
     }
 
+    checkCompletion(index) {
+        const row = Math.floor(index / 9);
+        const col = index % 9;
+        const boxIndex = Math.floor(row / 3) * 3 + Math.floor(col / 3);
+
+        let level = 1; // 默认单个正确
+
+        // 检查行是否完成
+        let rowComplete = true;
+        for (let c = 0; c < 9; c++) {
+            if (this.board[row * 9 + c] === 0) {
+                rowComplete = false;
+                break;
+            }
+        }
+
+        if (rowComplete && !this.completedRows.has(row)) {
+            this.completedRows.add(row);
+            level = 2;
+        }
+
+        // 检查列是否完成
+        let colComplete = true;
+        for (let r = 0; r < 9; r++) {
+            if (this.board[r * 9 + col] === 0) {
+                colComplete = false;
+                break;
+            }
+        }
+
+        if (colComplete && !this.completedCols.has(col)) {
+            this.completedCols.add(col);
+            level = 2;
+        }
+
+        // 检查宫格是否完成
+        let boxComplete = true;
+        const boxRow = Math.floor(row / 3) * 3;
+        const boxCol = Math.floor(col / 3) * 3;
+        for (let r = boxRow; r < boxRow + 3; r++) {
+            for (let c = boxCol; c < boxCol + 3; c++) {
+                if (this.board[r * 9 + c] === 0) {
+                    boxComplete = false;
+                    break;
+                }
+            }
+            if (!boxComplete) break;
+        }
+
+        if (boxComplete && !this.completedBoxes.has(boxIndex)) {
+            this.completedBoxes.add(boxIndex);
+            level = 2;
+        }
+
+        return level;
+    }
+
+    showCompletionEffect(index, level) {
+        const row = Math.floor(index / 9);
+        const col = index % 9;
+        const boxIndex = Math.floor(row / 3) * 3 + Math.floor(col / 3);
+
+        const cells = document.querySelectorAll('.sudoku-cell');
+        const cellsToHighlight = [];
+
+        if (level === 1) {
+            // 单个数字正确 - 轻微闪烁
+            cells[index].classList.add('success-pulse');
+            setTimeout(() => cells[index].classList.remove('success-pulse'), 400);
+        } else {
+            // 行/列/宫完成
+            // 高亮完成的行
+            for (let c = 0; c < 9; c++) {
+                const idx = row * 9 + c;
+                if (this.completedRows.has(row)) {
+                    cells[idx].classList.add('row-complete');
+                    cellsToHighlight.push(idx);
+                }
+            }
+
+            // 高亮完成的列
+            for (let r = 0; r < 9; r++) {
+                const idx = r * 9 + col;
+                if (this.completedCols.has(col)) {
+                    cells[idx].classList.add('col-complete');
+                    cellsToHighlight.push(idx);
+                }
+            }
+
+            // 高亮完成的宫格
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    const idx = r * 9 + c;
+                    if (this.completedBoxes.has(boxIndex)) {
+                        cells[idx].classList.add('box-complete');
+                        cellsToHighlight.push(idx);
+                    }
+                }
+            }
+
+            // 移除特效
+            setTimeout(() => {
+                cellsToHighlight.forEach(idx => {
+                    cells[idx].classList.remove('row-complete', 'col-complete', 'box-complete');
+                });
+            }, 1500);
+        }
+    }
+
     showHint() {
         if (this.hintsLeft <= 0 || this.gameOver) return;
+
+        // 播放提示音效
+        this.soundManager.playHint();
 
         const emptyCells = [];
         for (let i = 0; i < 81; i++) {
@@ -506,6 +730,18 @@ class SudokuGame {
                 </span>
             </div>`;
 
+            // 自动填入答案
+            this.board[hintInfo.cell] = hintInfo.value;
+            this.notes[hintInfo.cell].clear();
+
+            // 检测完成并播放音效/特效
+            const completionLevel = this.checkCompletion(hintInfo.cell);
+            this.soundManager.playSuccess(completionLevel);
+            this.showCompletionEffect(hintInfo.cell, completionLevel);
+
+            this.renderBoard();
+            this.checkWin();
+
             this.hintsLeft--;
             this.updateStats();
             moreBtn.disabled = true;
@@ -683,6 +919,12 @@ class SudokuGame {
         clearInterval(this.timerInterval);
 
         if (won) {
+            // 播放胜利音效
+            this.soundManager.playSuccess(3);
+
+            // 触发全局胜利特效
+            this.triggerVictoryEffect();
+
             const finalTime = document.getElementById('finalTime');
             const finalDiff = document.getElementById('finalDifficulty');
             const timer = document.getElementById('timer');
@@ -692,6 +934,48 @@ class SudokuGame {
         } else {
             alert('游戏结束！错误次数已达上限。');
             this.newGame();
+        }
+    }
+
+    triggerVictoryEffect() {
+        const cells = document.querySelectorAll('.sudoku-cell');
+        cells.forEach((cell, index) => {
+            setTimeout(() => {
+                cell.classList.add('victory-cell');
+            }, index * 20);
+        });
+
+        // 移除特效
+        setTimeout(() => {
+            cells.forEach(cell => {
+                cell.classList.remove('victory-cell');
+            });
+        }, 2000);
+
+        // 创建彩带特效
+        this.createConfetti();
+    }
+
+    createConfetti() {
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96e6a1', '#dda0dd', '#f7dc6f'];
+        const confettiCount = 100;
+
+        for (let i = 0; i < confettiCount; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.top = '-10px';
+            confetti.style.width = Math.random() * 10 + 5 + 'px';
+            confetti.style.height = confetti.style.width;
+            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = Math.random() * 2 + 2 + 's';
+            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+
+            document.body.appendChild(confetti);
+
+            setTimeout(() => {
+                confetti.remove();
+            }, 3500);
         }
     }
 }
