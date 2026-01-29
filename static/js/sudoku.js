@@ -254,9 +254,22 @@ class SudokuGame {
         const positions = Array.from({ length: 81 }, (_, i) => i);
         this.shuffle(positions);
 
-        for (let i = 0; i < removeCount; i++) {
-            this.board[positions[i]] = 0;
-            this.initialBoard[positions[i]] = 0;
+        let removed = 0;
+        for (let i = 0; i < 81 && removed < removeCount; i++) {
+            const pos = positions[i];
+            const backup = this.board[pos];
+
+            // 尝试挖空
+            this.board[pos] = 0;
+
+            // 检查是否仍有唯一解
+            if (!this.hasUniqueSolution(this.board)) {
+                // 如果没有唯一解，恢复这个格子
+                this.board[pos] = backup;
+            } else {
+                this.initialBoard[pos] = 0;
+                removed++;
+            }
         }
     }
 
@@ -303,6 +316,29 @@ class SudokuGame {
         }
 
         return true;
+    }
+
+    hasUniqueSolution(board) {
+        return this.countSolutions(board) === 1;
+    }
+
+    countSolutions(board, limit = 2) {
+        const empty = board.indexOf(0);
+        if (empty === -1) return 1;
+
+        const row = Math.floor(empty / 9);
+        const col = empty % 9;
+
+        let count = 0;
+        for (let num = 1; num <= 9; num++) {
+            if (this.isValidPlacement(board, row, col, num)) {
+                board[empty] = num;
+                count += this.countSolutions(board, limit - count);
+                board[empty] = 0;
+                if (count >= limit) return count;
+            }
+        }
+        return count;
     }
 
     shuffle(array) {
