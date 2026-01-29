@@ -167,7 +167,7 @@
 }
 
 .sudoku-cell.user-input {
-    color: var(--primary);
+    color: #6366f1;
 }
 
 .sudoku-cell.hint-input {
