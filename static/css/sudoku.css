@@ -170,6 +170,10 @@
     color: var(--primary);
 }
 
+.sudoku-cell.hint-input {
+    color: #f59e0b;
+}
+
 .sudoku-cell.hint-target {
     animation: hintTarget 0.8s ease;
     background: rgba(250, 204, 21, 0.3) !important;
