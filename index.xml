@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>我的博客</title><link>https://begin2023.github.io/</link><description>Recent content on 我的博客</description><generator>Hugo -- 0.155.0</generator><language>zh-CN</language><lastBuildDate>Wed, 28 Jan 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://begin2023.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>关于</title><link>https://begin2023.github.io/about/</link><pubDate>Wed, 28 Jan 2026 00:00:00 +0000</pubDate><guid>https://begin2023.github.io/about/</guid><description>&lt;h2 id="关于我"&gt;关于我&lt;/h2&gt;
+&lt;p&gt;欢迎来到我的博客！&lt;/p&gt;
+&lt;p&gt;这里是我分享技术心得、生活感悟的地方。&lt;/p&gt;
+&lt;h2 id="联系方式"&gt;联系方式&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;GitHub: &lt;a href="https://github.com/begin2023"&gt;@begin2023&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="关于本站"&gt;关于本站&lt;/h2&gt;
+&lt;p&gt;本博客使用 &lt;a href="https://gohugo.io/"&gt;Hugo&lt;/a&gt; 构建，采用 &lt;a href="https://github.com/adityatelange/hugo-PaperMod"&gt;PaperMod&lt;/a&gt; 主题，托管在 &lt;a href="https://pages.github.com/"&gt;GitHub Pages&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;特点：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;完全免费且无需服务器&lt;/li&gt;
+&lt;li&gt;支持亮色/深色/自动主题切换&lt;/li&gt;
+&lt;li&gt;响应式设计，适配各种设备&lt;/li&gt;
+&lt;li&gt;文章使用 Markdown 格式编写&lt;/li&gt;
+&lt;/ul&gt;</description></item><item><title>你好，世界！</title><link>https://begin2023.github.io/posts/hello-world/</link><pubDate>Wed, 28 Jan 2026 00:00:00 +0000</pubDate><guid>https://begin2023.github.io/posts/hello-world/</guid><description>这是我的第一篇博客文章，欢迎来到我的博客！在这里我将分享技术心得和生活感悟。</description></item><item><title>如何使用 GitHub Pages 搭建免费博客</title><link>https://begin2023.github.io/posts/github-pages-tutorial/</link><pubDate>Wed, 28 Jan 2026 00:00:00 +0000</pubDate><guid>https://begin2023.github.io/posts/github-pages-tutorial/</guid><description>本文将详细介绍如何使用 GitHub Pages 搭建一个完全免费的个人博客，无需购买服务器。</description></item></channel></rss>
