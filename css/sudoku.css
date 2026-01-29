@@ -157,8 +157,13 @@
 }
 
 .sudoku-cell.error {
-    color: #ef4444 !important;
-    animation: shake 0.3s ease;
+    color: #fff !important;
+    background: #ef4444 !important;
+    animation: shake 0.4s ease;
+}
+
+.sudoku-cell.error-clear {
+    animation: fadeOutError 0.3s ease;
 }
 
 .sudoku-cell.user-input {
@@ -477,8 +482,130 @@
 /* 动画 */
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    75% { transform: translateX(4px); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(3px); }
+}
+
+@keyframes fadeOutError {
+    from {
+        background: #ef4444;
+        opacity: 0.7;
+    }
+    to {
+        background: var(--theme);
+        opacity: 1;
+    }
+}
+
+@keyframes successPulse {
+    0%, 100% {
+        transform: scale(1);
+        background: var(--theme);
+    }
+    50% {
+        transform: scale(1.1);
+        background: rgba(34, 197, 94, 0.3);
+    }
+}
+
+@keyframes rowComplete {
+    0% {
+        background: var(--theme);
+    }
+    50% {
+        background: rgba(59, 130, 246, 0.4);
+    }
+    100% {
+        background: var(--theme);
+    }
+}
+
+@keyframes colComplete {
+    0% {
+        background: var(--theme);
+    }
+    50% {
+        background: rgba(234, 88, 12, 0.4);
+    }
+    100% {
+        background: var(--theme);
+    }
+}
+
+@keyframes boxComplete {
+    0% {
+        background: var(--theme);
+        transform: scale(1);
+    }
+    50% {
+        background: rgba(168, 85, 247, 0.4);
+        transform: scale(1.05);
+    }
+    100% {
+        background: var(--theme);
+        transform: scale(1);
+    }
+}
+
+@keyframes victoryCell {
+    0%, 100% {
+        background: var(--theme);
+        transform: rotate(0deg);
+    }
+    25% {
+        background: rgba(251, 191, 36, 0.5);
+        transform: rotate(5deg);
+    }
+    50% {
+        background: rgba(236, 72, 153, 0.5);
+        transform: rotate(-5deg);
+    }
+    75% {
+        background: rgba(52, 211, 153, 0.5);
+        transform: rotate(3deg);
+    }
+}
+
+@keyframes confettiFall {
+    0% {
+        transform: translateY(-10px) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.sudoku-cell.success-pulse {
+    animation: successPulse 0.4s ease;
+}
+
+.sudoku-cell.row-complete {
+    animation: rowComplete 1.2s ease;
+}
+
+.sudoku-cell.col-complete {
+    animation: colComplete 1.2s ease;
+}
+
+.sudoku-cell.box-complete {
+    animation: boxComplete 1.2s ease;
+}
+
+.sudoku-cell.victory-cell {
+    animation: victoryCell 0.6s ease;
+}
+
+.confetti {
+    position: fixed;
+    top: 0;
+    z-index: 10000;
+    pointer-events: none;
+    animation: confettiFall 3s ease-out forwards;
+    border-radius: 2px;
 }
 
 @keyframes hintPulse {
