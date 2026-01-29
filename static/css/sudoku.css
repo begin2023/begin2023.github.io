@@ -519,39 +519,87 @@
 @keyframes rowComplete {
     0% {
         background: var(--theme);
+        box-shadow: none;
+        transform: scale(1);
     }
-    50% {
-        background: rgba(59, 130, 246, 0.4);
+    20% {
+        background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd);
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.4);
+        transform: scale(1.02);
+    }
+    40% {
+        background: linear-gradient(90deg, #60a5fa, #93c5fd, #bfdbfe);
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 0 60px rgba(59, 130, 246, 0.3);
+    }
+    60% {
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        transform: scale(1.01);
     }
     100% {
         background: var(--theme);
+        box-shadow: none;
+        transform: scale(1);
     }
 }
 
 @keyframes colComplete {
     0% {
         background: var(--theme);
+        box-shadow: none;
+        transform: scale(1);
     }
-    50% {
-        background: rgba(234, 88, 12, 0.4);
+    20% {
+        background: linear-gradient(180deg, #ea580c, #f97316, #fb923c);
+        box-shadow: 0 0 20px rgba(234, 88, 12, 0.6), 0 0 40px rgba(234, 88, 12, 0.4);
+        transform: scale(1.02);
+    }
+    40% {
+        background: linear-gradient(180deg, #f97316, #fb923c, #fdba74);
+        box-shadow: 0 0 30px rgba(234, 88, 12, 0.5), 0 0 60px rgba(234, 88, 12, 0.3);
+    }
+    60% {
+        background: linear-gradient(180deg, #ea580c, #f97316);
+        box-shadow: 0 0 20px rgba(234, 88, 12, 0.4);
+        transform: scale(1.01);
     }
     100% {
         background: var(--theme);
+        box-shadow: none;
+        transform: scale(1);
     }
 }
 
 @keyframes boxComplete {
     0% {
         background: var(--theme);
-        transform: scale(1);
+        box-shadow: none;
+        transform: scale(1) rotate(0deg);
     }
-    50% {
-        background: rgba(168, 85, 247, 0.4);
-        transform: scale(1.05);
+    15% {
+        background: conic-gradient(from 0deg, #a855f7, #c084fc, #d8b4fe, #e9d5ff);
+        box-shadow: 0 0 25px rgba(168, 85, 247, 0.7), 0 0 50px rgba(168, 85, 247, 0.5);
+        transform: scale(1.08) rotate(3deg);
+    }
+    30% {
+        background: conic-gradient(from 90deg, #c084fc, #d8b4fe, #e9d5ff, #a855f7);
+        box-shadow: 0 0 35px rgba(168, 85, 247, 0.6), 0 0 70px rgba(168, 85, 247, 0.4);
+        transform: scale(1.06) rotate(-3deg);
+    }
+    45% {
+        background: conic-gradient(from 180deg, #a855f7, #c084fc, #d8b4fe);
+        box-shadow: 0 0 25px rgba(168, 85, 247, 0.5);
+        transform: scale(1.04) rotate(2deg);
+    }
+    60% {
+        background: conic-gradient(from 270deg, #c084fc, #a855f7);
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        transform: scale(1.02);
     }
     100% {
         background: var(--theme);
-        transform: scale(1);
+        box-shadow: none;
+        transform: scale(1) rotate(0deg);
     }
 }
 
@@ -590,15 +638,15 @@
 }
 
 .sudoku-cell.row-complete {
-    animation: rowComplete 1.2s ease;
+    animation: rowComplete 2s ease;
 }
 
 .sudoku-cell.col-complete {
-    animation: colComplete 1.2s ease;
+    animation: colComplete 2s ease;
 }
 
 .sudoku-cell.box-complete {
-    animation: boxComplete 1.2s ease;
+    animation: boxComplete 2.2s ease;
 }
 
 .sudoku-cell.victory-cell {
