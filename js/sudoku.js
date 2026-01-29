@@ -91,6 +91,7 @@ class SudokuGame {
         this.timer = 0;
         this.timerInterval = null;
         this.difficulty = 'easy';
+        this.gameMode = 'classic'; // classic 或 killer
         this.gameOver = false;
         this.hintLevel = 0;
         this.currentHintCell = null;
@@ -99,6 +100,7 @@ class SudokuGame {
         this.completedCols = new Set();
         this.completedBoxes = new Set();
         this.hintCells = new Set();
+        this.cages = []; // 杀手数独的笼子
 
         this.difficultySettings = {
             easy: { remove: 35, hints: 5 },
@@ -159,6 +161,15 @@ class SudokuGame {
                 document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.difficulty = btn.dataset.difficulty;
+                this.newGame();
+            });
+        });
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.gameMode = btn.dataset.mode;
                 this.newGame();
             });
         });
@@ -238,14 +249,19 @@ class SudokuGame {
         this.completedCols.clear();
         this.completedBoxes.clear();
         this.hintCells.clear();
+        this.cages = [];
 
-        this.generatePuzzle();
+        if (this.gameMode === 'killer') {
+            this.generateKillerPuzzle();
+        } else {
+            this.generateClassicPuzzle();
+        }
         this.renderBoard();
         this.updateStats();
         this.startTimer();
     }
 
-    generatePuzzle() {
+    generateClassicPuzzle() {
         this.solution = this.generateSolution();
         this.board = [...this.solution];
         this.initialBoard = [...this.solution];
@@ -259,17 +275,132 @@ class SudokuGame {
             const pos = positions[i];
             const backup = this.board[pos];
 
-            // 尝试挖空
             this.board[pos] = 0;
 
-            // 检查是否仍有唯一解
             if (!this.hasUniqueSolution(this.board)) {
-                // 如果没有唯一解，恢复这个格子
                 this.board[pos] = backup;
             } else {
                 this.initialBoard[pos] = 0;
                 removed++;
             }
+        }
+    }
+
+    generateKillerPuzzle() {
+        // 生成杀手数独
+        // 1. 先生成完整解
+        this.solution = this.generateSolution();
+        this.board = Array(81).fill(0);
+        this.initialBoard = Array(81).fill(0);
+
+        // 2. 生成笼子布局
+        this.generateCages();
+
+        // 3. 根据笼子总和挖空，确保唯一解
+        this.fillKillerBoard();
+    }
+
+    generateCages() {
+        // 生成杀手数独的笼子
+        this.cages = [];
+        const used = new Set();
+        const cageLayouts = [
+            // 简单的2-3格子笼子模式
+            [[0, 1], [3, 4], [0, 3], [1, 4]],
+            [[0, 1, 2], [0, 3, 6], [0, 1, 3, 4]],
+        ];
+
+        // 使用预定义的笼子布局，确保合理
+        this.createStandardCages();
+    }
+
+    createStandardCages() {
+        // 标准杀手数独笼子布局
+        // 每个宫格内有2-4个笼子
+        this.cages = [];
+
+        const boxCageLayouts = [
+            // 每个3x3宫格内的笼子模式
+            [
+                { cells: [0, 1, 3, 4], sum: 0 }, // 宫格左上2x2
+                { cells: [2, 5], sum: 0 },           // 右上两格
+                { cells: [6, 7], sum: 0 },           // 左下两格
+                { cells: [8], sum: 0 }              // 右下单格
+            ],
+            [
+                { cells: [0, 1], sum: 0 },
+                { cells: [2, 3], sum: 0 },
+                { cells: [4, 5, 6], sum: 0 },
+                { cells: [7, 8], sum: 0 }
+            ]
+        ];
+
+        // 为每个3x3宫格生成笼子
+        for (let box = 0; box < 9; box++) {
+            const layout = boxCageLayouts[box % 2];
+            const boxRow = Math.floor(box / 3) * 3;
+            const boxCol = (box % 3) * 3;
+
+            for (const cage of layout) {
+                const globalCells = cage.cells.map(local => {
+                    const localRow = Math.floor(local / 3);
+                    const localCol = local % 3;
+                    return (boxRow + localRow) * 9 + (boxCol + localCol);
+                });
+
+                this.cages.push({
+                    cells: globalCells,
+                    sum: 0
+                });
+            }
+        }
+
+        // 计算每个笼子的总和（基于完整解）
+        for (const cage of this.cages) {
+            cage.sum = cage.cells.reduce((sum, idx) => sum + this.solution[idx], 0);
+        }
+    }
+
+    fillKillerBoard() {
+        // 根据难度决定挖空多少个格子
+        const fillCount = {
+            easy: 30,
+            medium: 38,
+            hard: 44,
+            expert: 50
+        }[this.difficulty];
+
+        // 随机选择要保留的格子位置
+        const positions = Array.from({ length: 81 }, (_, i) => i);
+        this.shuffle(positions);
+
+        // 填入指定数量的格子
+        for (let i = 0; i < fillCount; i++) {
+            const pos = positions[i];
+            this.board[pos] = this.solution[pos];
+            this.initialBoard[pos] = this.solution[pos];
+        }
+
+        // 验证唯一解
+        if (!this.hasUniqueSolution(this.board)) {
+            // 如果不唯一，尝试调整
+            this.adjustForUniqueSolution(fillCount);
+        }
+    }
+
+    adjustForUniqueSolution(fillCount) {
+        // 通过调整来确保唯一解
+        const emptyCells = this.board.map((val, idx) => val === 0 ? idx : -1).filter(i => i !== -1);
+
+        // 尝试添加更多提示
+        let attempts = 0;
+        while (!this.hasUniqueSolution(this.board) && attempts < 20) {
+            const randomEmpty = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            if (this.board[randomEmpty] === 0) {
+                this.board[randomEmpty] = this.solution[randomEmpty];
+                this.initialBoard[randomEmpty] = this.solution[randomEmpty];
+            }
+            attempts++;
         }
     }
 
@@ -843,11 +974,62 @@ class SudokuGame {
         this.renderBoard();
     }
 
+    renderCages(cells) {
+        // 移除所有笼子相关的 class
+        cells.forEach(cell => {
+            cell.classList.remove('cage-top', 'cage-bottom', 'cage-left', 'cage-right');
+            const cageSum = cell.querySelector('.cage-sum');
+            if (cageSum) cageSum.remove();
+        });
+
+        // 为每个笼子添加边框和总和数字
+        for (const cage of this.cages) {
+            const firstCell = cage.cells[0];
+
+            // 添加总和数字到第一个格子
+            const sumEl = document.createElement('span');
+            sumEl.className = 'cage-sum';
+            sumEl.textContent = cage.sum;
+            cells[firstCell].appendChild(sumEl);
+
+            // 添加笼子边框
+            const rows = new Set(cage.cells.map(c => Math.floor(c / 9)));
+            const cols = new Set(cage.cells.map(c => c % 9));
+            const minRow = Math.min(...rows);
+            const maxRow = Math.max(...rows);
+            const minCol = Math.min(...cols);
+            const maxCol = Math.max(...cols);
+
+            for (const cellIdx of cage.cells) {
+                const row = Math.floor(cellIdx / 9);
+                const col = cellIdx % 9;
+
+                if (row === minRow && !cage.cells.includes(cellIdx - 9)) {
+                    cells[cellIdx].classList.add('cage-top');
+                }
+                if (row === maxRow && !cage.cells.includes(cellIdx + 9)) {
+                    cells[cellIdx].classList.add('cage-bottom');
+                }
+                if (col === minCol && !cage.cells.includes(cellIdx - 1)) {
+                    cells[cellIdx].classList.add('cage-left');
+                }
+                if (col === maxCol && !cage.cells.includes(cellIdx + 1)) {
+                    cells[cellIdx].classList.add('cage-right');
+                }
+            }
+        }
+    }
+
     renderBoard() {
         const cells = document.querySelectorAll('.sudoku-cell');
         if (cells.length === 0) return;
 
         const selectedNum = this.selectedCell !== null ? this.board[this.selectedCell] : null;
+
+        // 绘制杀手数独笼子
+        if (this.gameMode === 'killer') {
+            this.renderCages(cells);
+        }
 
         cells.forEach((cell, index) => {
             const value = this.board[index];
@@ -951,9 +1133,71 @@ class SudokuGame {
     }
 
     checkWin() {
-        if (this.board.every((val, idx) => val === this.solution[idx])) {
+        if (this.gameMode === 'killer') {
+            // 杀手数独检查
+            // 检查是否所有格子都已填入
+            if (this.board.some(val => val === 0)) return;
+
+            // 检查每个笼子的总和是否正确
+            for (const cage of this.cages) {
+                const sum = cage.cells.reduce((s, idx) => s + this.board[idx], 0);
+                if (sum !== cage.sum) return;
+            }
+
+            // 检查数独基本规则
+            if (!this.isSudokuValid(this.board)) return;
+
             this.endGame(true);
+        } else {
+            // 标准数独检查
+            if (this.board.every((val, idx) => val === this.solution[idx])) {
+                this.endGame(true);
+            }
         }
+    }
+
+    isSudokuValid(board) {
+        // 检查行
+        for (let row = 0; row < 9; row++) {
+            const seen = new Set();
+            for (let col = 0; col < 9; col++) {
+                const val = board[row * 9 + col];
+                if (val !== 0) {
+                    if (seen.has(val)) return false;
+                    seen.add(val);
+                }
+            }
+        }
+
+        // 检查列
+        for (let col = 0; col < 9; col++) {
+            const seen = new Set();
+            for (let row = 0; row < 9; row++) {
+                const val = board[row * 9 + col];
+                if (val !== 0) {
+                    if (seen.has(val)) return false;
+                    seen.add(val);
+                }
+            }
+        }
+
+        // 检查宫格
+        for (let boxRow = 0; boxRow < 9; boxRow += 3) {
+            for (let boxCol = 0; boxCol < 9; boxCol += 3) {
+                const seen = new Set();
+                for (let r = boxRow; r < boxRow + 3; r++) {
+                    for (let c = boxCol; c < boxCol + 3; c++) {
+                        const val = board[r * 9 + c];
+                        if (val !== 0) {
+                            if (seen.has(val)) return false;
+                            seen.add(val);
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     endGame(won) {
