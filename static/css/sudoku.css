@@ -245,8 +245,11 @@
     border-bottom: 2px solid var(--primary);
 }
 
-/* 杀手数独笼子样式 */
-.sudoku-cell::after {
+/* 杀手数独笼子样式 - 只在杀手模式下应用 */
+.sudoku-cell.cage-top::after,
+.sudoku-cell.cage-bottom::after,
+.sudoku-cell.cage-left::after,
+.sudoku-cell.cage-right::after {
     content: "";
     position: absolute;
     top: 0;

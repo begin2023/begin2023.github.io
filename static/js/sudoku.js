@@ -1208,22 +1208,14 @@ class SudokuGame {
                 }
             }
 
-            // 在杀手模式下，需要保留 cage-sum 元素
-            let cageSum = null;
-            if (this.gameMode === 'killer') {
-                cageSum = cell.querySelector('.cage-sum');
-            }
-
             if (value !== 0) {
                 cell.textContent = value;
-                if (cageSum) cell.appendChild(cageSum);
             } else if (this.notes[index].size > 0) {
                 cell.innerHTML = '<div class="notes">' +
                     [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n =>
                         `<span class="note">${this.notes[index].has(n) ? n : ''}</span>`
                     ).join('') +
                     '</div>';
-                if (cageSum) cell.appendChild(cageSum);
             } else {
                 cell.textContent = '';
             }
