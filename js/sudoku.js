@@ -313,53 +313,78 @@ class SudokuGame {
             '#fee2e2', '#fce7f3', '#dcfce7', '#f3e8ff'
         ];
 
-        // 使用基于种子扩散的算法生成不规则笼子
-        const cageMap = new Array(81).fill(-1);
-        let cageId = 0;
-        const remainingCells = new Set(Array.from({ length: 81 }, (_, i) => i));
+        let success = false;
+        let attempts = 0;
+        const MAX_TOTAL_ATTEMPTS = 20; // 尝试生成整个布局的最大次数
 
-        while (remainingCells.size > 0) {
-            const startCell = Array.from(remainingCells)[Math.floor(Math.random() * remainingCells.size)];
-            const cageCells = this.createIrregularCage(startCell, remainingCells, cageMap);
+        while (!success && attempts < MAX_TOTAL_ATTEMPTS) {
+            const currentCages = [];
+            let cageId = 0;
+            const remainingCells = new Set(Array.from({ length: 81 }, (_, i) => i));
+            
+            // 防止局部死循环的计数器
+            let stuckCounter = 0;
+            const MAX_STUCK_ATTEMPTS = 500;
 
-            if (cageCells.length >= 2 && cageCells.length <= 6) {
-                // 验证笼子总和是否合理（2-6格笼子的合理总和范围）
-                const sum = cageCells.reduce((s, idx) => s + this.solution[idx], 0);
-                const minSum = this.getMinPossibleSum(cageCells.length);
-                const maxSum = this.getMaxPossibleSum(cageCells.length);
+            while (remainingCells.size > 0 && stuckCounter < MAX_STUCK_ATTEMPTS) {
+                const startCell = Array.from(remainingCells)[Math.floor(Math.random() * remainingCells.size)];
+                
+                // 尝试生成一个笼子（传入 remainingCells 的副本以避免直接修改）
+                const tempRemaining = new Set(remainingCells);
+                const cageCells = this.createIrregularCage(startCell, tempRemaining);
 
-                // 只有总和在合理范围内才创建笼子
-                if (sum >= minSum && sum <= maxSum) {
-                    this.cages.push({
-                        id: cageId,
-                        cells: cageCells,
-                        sum: sum,
-                        color: cageColors[cageId % cageColors.length]
-                    });
-                    cageId++;
-                } else {
-                    // 如果总和不合理，重新分配这些格子
-                    cageCells.forEach(idx => {
-                        cageMap[idx] = -1;
-                        remainingCells.add(idx);
-                    });
+                let isValid = false;
+
+                // 验证大小
+                if (cageCells.length >= 2 && cageCells.length <= 6) {
+                    // 验证总和
+                    const sum = cageCells.reduce((s, idx) => s + this.solution[idx], 0);
+                    const minSum = this.getMinPossibleSum(cageCells.length);
+                    const maxSum = this.getMaxPossibleSum(cageCells.length);
+
+                    if (sum >= minSum && sum <= maxSum) {
+                        isValid = true;
+                        // 采纳这个笼子
+                        currentCages.push({
+                            id: cageId,
+                            cells: cageCells,
+                            sum: sum,
+                            color: cageColors[cageId % cageColors.length]
+                        });
+                        cageId++;
+                        
+                        // 从真正的 remainingCells 中移除
+                        cageCells.forEach(cell => remainingCells.delete(cell));
+                        stuckCounter = 0; // 重置卡死计数器
+                    }
                 }
+                
+                // 如果最后只剩很少的格子，且无法组成有效笼子，允许单格笼子（虽然不常见，但为了保证覆盖）
+                // 或者尝试将这些格子合并到相邻笼子（逻辑较复杂，这里简化处理：重试整个布局）
+                if (!isValid) {
+                    stuckCounter++;
+                }
+            }
+
+            // 如果所有格子都分配完了，或者剩下的很少且无法处理（这里简化为全部分配才算成功）
+            // 实际上，只要 remainingCells 为空，就是成功
+            if (remainingCells.size === 0) {
+                this.cages = currentCages;
+                success = true;
             } else {
-                // 笼子大小不合适，重新分配
-                cageCells.forEach(idx => {
-                    cageMap[idx] = -1;
-                    remainingCells.add(idx);
-                });
+                // 失败，增加尝试次数，重新开始
+                attempts++;
             }
         }
 
-        // 确保所有格子都被分配
-        if (this.cages.length < 9) {
+        // 如果多次尝试都失败，回退到标准笼子
+        if (!success) {
+            console.warn("Failed to generate irregular cages, falling back to standard layout.");
             this.createStandardCages();
         }
     }
 
-    createIrregularCage(startCell, remainingCells, cageMap) {
+    createIrregularCage(startCell, remainingCells) {
         // 基于种子扩散生成不规则形状的笼子
         const cageCells = [];
         const queue = [startCell];
@@ -371,7 +396,6 @@ class SudokuGame {
         while (queue.length > 0 && cageCells.length < targetSize) {
             const current = queue.shift();
             cageCells.push(current);
-            cageMap[current] = this.cages.length;
 
             if (cageCells.length >= targetSize) break;
 
@@ -382,11 +406,12 @@ class SudokuGame {
             this.shuffle(neighbors);
 
             // 有一定概率不继续扩展，让扩散从其他种子开始
-            const expandProbability = 0.7;
+            const expandProbability = 0.85; // 提高扩展概率，减少单格孤岛
 
             for (const neighbor of neighbors) {
                 if (queue.length + cageCells.length >= targetSize) break;
-                if (Math.random() < expandProbability && remainingCells.has(neighbor)) {
+                // 确保不添加重复的
+                if (!queue.includes(neighbor) && Math.random() < expandProbability && remainingCells.has(neighbor)) {
                     remainingCells.delete(neighbor);
                     queue.push(neighbor);
                 }
