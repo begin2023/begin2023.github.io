@@ -7,74 +7,78 @@
     <link rel="stylesheet" href="/css/sudoku.css">
 
     <div class="sudoku-container">
-      <!-- 游戏控制区 -->
-      <div class="game-controls">
-        <div class="mode-selector">
-          <span class="mode-label">模式：</span>
-          <button class="mode-btn active" data-mode="classic">经典数独</button>
-          <button class="mode-btn" data-mode="killer">杀手数独</button>
-        </div>
-        <div class="difficulty-selector">
-          <span class="diff-label">难度：</span>
-          <button class="diff-btn active" data-difficulty="easy">简单</button>
-          <button class="diff-btn" data-difficulty="medium">中等</button>
-          <button class="diff-btn" data-difficulty="hard">困难</button>
-          <button class="diff-btn" data-difficulty="expert">专家</button>
-        </div>
-        <button class="new-game-btn" id="newGameBtn">新游戏</button>
+      <div class="sudoku-main">
+        <!-- 数独棋盘 -->
+        <div class="sudoku-board" id="sudokuBoard"></div>
       </div>
 
-      <!-- 游戏状态 -->
-      <div class="game-stats">
-        <div class="stat-item">
-          <span class="stat-label">用时</span>
-          <span class="stat-value" id="timer">00:00</span>
+      <div class="sudoku-sidebar">
+        <!-- 游戏控制区 -->
+        <div class="game-controls">
+          <div class="mode-selector">
+            <span class="mode-label">模式：</span>
+            <button class="mode-btn active" data-mode="classic">经典</button>
+            <button class="mode-btn" data-mode="killer">杀手</button>
+          </div>
+          <div class="difficulty-selector">
+            <span class="diff-label">难度：</span>
+            <button class="diff-btn active" data-difficulty="easy">简单</button>
+            <button class="diff-btn" data-difficulty="medium">中等</button>
+            <button class="diff-btn" data-difficulty="hard">困难</button>
+            <button class="diff-btn" data-difficulty="expert">专家</button>
+          </div>
+          <button class="new-game-btn" id="newGameBtn">新游戏</button>
         </div>
-        <div class="stat-item">
-          <span class="stat-label">提示</span>
-          <span class="stat-value" id="hintsLeft">3</span>
+
+        <!-- 游戏状态 -->
+        <div class="game-stats">
+          <div class="stat-item">
+            <span class="stat-label">用时</span>
+            <span class="stat-value" id="timer">00:00</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">提示</span>
+            <span class="stat-value" id="hintsLeft">3</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">错误</span>
+            <span class="stat-value" id="mistakes">0/3</span>
+          </div>
         </div>
-        <div class="stat-item">
-          <span class="stat-label">错误</span>
-          <span class="stat-value" id="mistakes">0/3</span>
+
+        <!-- 数字输入面板 -->
+        <div class="number-pad">
+          <button class="num-btn" data-num="1">1</button>
+          <button class="num-btn" data-num="2">2</button>
+          <button class="num-btn" data-num="3">3</button>
+          <button class="num-btn" data-num="4">4</button>
+          <button class="num-btn" data-num="5">5</button>
+          <button class="num-btn" data-num="6">6</button>
+          <button class="num-btn" data-num="7">7</button>
+          <button class="num-btn" data-num="8">8</button>
+          <button class="num-btn" data-num="9">9</button>
+          <button class="num-btn erase-btn" data-num="0">⌫</button>
         </div>
-      </div>
 
-      <!-- 数独棋盘 -->
-      <div class="sudoku-board" id="sudokuBoard"></div>
-
-      <!-- 数字输入面板 -->
-      <div class="number-pad">
-        <button class="num-btn" data-num="1">1</button>
-        <button class="num-btn" data-num="2">2</button>
-        <button class="num-btn" data-num="3">3</button>
-        <button class="num-btn" data-num="4">4</button>
-        <button class="num-btn" data-num="5">5</button>
-        <button class="num-btn" data-num="6">6</button>
-        <button class="num-btn" data-num="7">7</button>
-        <button class="num-btn" data-num="8">8</button>
-        <button class="num-btn" data-num="9">9</button>
-        <button class="num-btn erase-btn" data-num="0">⌫</button>
-      </div>
-
-      <!-- 操作按钮 -->
-      <div class="action-buttons">
-        <button class="action-btn" id="hintBtn">
-          <span class="btn-icon">💡</span>
-          <span>提示</span>
-        </button>
-        <button class="action-btn" id="notesBtn">
-          <span class="btn-icon">✏️</span>
-          <span>笔记</span>
-        </button>
-        <button class="action-btn" id="soundBtn">
-          <span class="btn-icon" id="soundIcon">🔊</span>
-          <span>音效</span>
-        </button>
-        <button class="action-btn" id="undoBtn">
-          <span class="btn-icon">↩️</span>
-          <span>撤销</span>
-        </button>
+        <!-- 操作按钮 -->
+        <div class="action-buttons">
+          <button class="action-btn" id="hintBtn">
+            <span class="btn-icon">??</span>
+            <span>提示</span>
+          </button>
+          <button class="action-btn" id="notesBtn">
+            <span class="btn-icon">✏️</span>
+            <span>笔记</span>
+          </button>
+          <button class="action-btn" id="soundBtn">
+            <span class="btn-icon" id="soundIcon">🔊</span>
+            <span>音效</span>
+          </button>
+          <button class="action-btn" id="undoBtn">
+            <span class="btn-icon">↩️</span>
+            <span>撤销</span>
+          </button>
+        </div>
       </div>
 
       <!-- 提示面板 -->
