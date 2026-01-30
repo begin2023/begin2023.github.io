@@ -353,40 +353,61 @@
 }
 
 /* 提示面板 */
-.hint-panel {
+.hint-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 998;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
 }
 
-.hint-panel.show {
+.hint-overlay.show {
     opacity: 1;
     visibility: visible;
 }
 
-.hint-content {
+.hint-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 380px;
+    height: 100%;
     background: var(--theme);
-    border-radius: 12px;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.hint-panel.show {
+    opacity: 1;
+    visibility: visible;
+    right: 0;
+}
+
+.hint-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0;
     padding: 20px;
-    max-width: 360px;
-    width: 90%;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    transform: translateY(20px);
-    transition: transform 0.3s ease;
+    max-width: none;
+    box-shadow: none;
+    transform: none;
+    transition: none;
+    overflow-y: auto;
 }
 
 .hint-panel.show .hint-content {
-    transform: translateY(0);
+    transform: none;
 }
 
 .hint-header {
@@ -797,5 +818,25 @@
     .diff-btn {
         padding: 4px 8px;
         font-size: 0.75rem;
+    }
+
+    /* 小屏幕提示面板从底部弹出 */
+    .hint-panel {
+        width: 100%;
+        right: 0;
+        top: 100%;
+        height: auto;
+        max-height: 60vh;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+    }
+
+    .hint-panel.show {
+        top: 40vh;
+    }
+
+    .hint-content {
+        border-radius: 0;
+        padding: 16px;
     }
 }

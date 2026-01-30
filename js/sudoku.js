@@ -197,6 +197,11 @@ class SudokuGame {
             hintClose.addEventListener('click', () => this.closeHint());
         }
 
+        const hintOverlay = document.getElementById('hintOverlay');
+        if (hintOverlay) {
+            hintOverlay.addEventListener('click', () => this.closeHint());
+        }
+
         const showMoreHint = document.getElementById('showMoreHint');
         if (showMoreHint) {
             showMoreHint.addEventListener('click', () => this.showMoreHint());
@@ -776,6 +781,12 @@ class SudokuGame {
     }
 
     findHintableCell(emptyCells) {
+        // 杀手数独：优先检查笼子约束
+        if (this.gameMode === 'killer') {
+            const cageHint = this.findCageHint(emptyCells);
+            if (cageHint) return cageHint;
+        }
+
         for (const cell of emptyCells) {
             const row = Math.floor(cell / 9);
             const col = cell % 9;
@@ -815,6 +826,120 @@ class SudokuGame {
             col,
             candidates: this.getCandidates(randomCell)
         };
+    }
+
+    findCageHint(emptyCells) {
+        for (const cell of emptyCells) {
+            const cage = this.findCage(cell);
+            if (!cage || cage.cells.length <= 1) continue;
+
+            // 计算笼子内已填入数字的和
+            let currentSum = 0;
+            let emptyCount = 0;
+            for (const cellIdx of cage.cells) {
+                if (this.board[cellIdx] !== 0) {
+                    currentSum += this.board[cellIdx];
+                } else {
+                    emptyCount++;
+                }
+            }
+
+            // 如果只剩一个空格，可以直接计算
+            if (emptyCount === 1) {
+                const remaining = cage.sum - currentSum;
+                const row = Math.floor(cell / 9);
+                const col = cell % 9;
+                return {
+                    cell,
+                    type: 'cage_single',
+                    value: remaining,
+                    row,
+                    col,
+                    candidates: [remaining],
+                    cageSum: cage.sum,
+                    currentSum: currentSum,
+                    cageCells: cage.cells.length
+                };
+            }
+
+            // 检查笼子内是否有必须的数字
+            const requiredNumbers = this.findRequiredCageNumbers(cage);
+            for (const req of requiredNumbers) {
+                if (req.cell === cell) {
+                    const row = Math.floor(cell / 9);
+                    const col = cell % 9;
+                    return {
+                        cell,
+                        type: 'cage_required',
+                        value: req.number,
+                        row,
+                        col,
+                        candidates: this.getCandidates(cell),
+                        cageSum: cage.sum,
+                        currentSum: currentSum,
+                        cageCells: cage.cells.length,
+                        reason: req.reason
+                    };
+                }
+            }
+        }
+        return null;
+    }
+
+    findRequiredCageNumbers(cage) {
+        const results = [];
+        const emptyCells = cage.cells.filter(idx => this.board[idx] === 0);
+
+        for (const emptyIdx of emptyCells) {
+            const row = Math.floor(emptyIdx / 9);
+            const col = emptyIdx % 9;
+            const candidates = this.getCandidates(emptyIdx).filter(n => {
+                // 过滤掉笼子内已有的数字
+                for (const cellIdx of cage.cells) {
+                    if (this.board[cellIdx] === n) return false;
+                }
+                return true;
+            });
+
+            // 计算笼子剩余需要达到的和
+            let currentSum = 0;
+            for (const cellIdx of cage.cells) {
+                currentSum += this.board[cellIdx];
+            }
+            const remainingSum = cage.sum - currentSum;
+
+            // 检查是否有某个数字只能在这个位置
+            for (const num of candidates) {
+                let canPlaceElsewhere = false;
+                for (const otherEmpty of emptyCells) {
+                    if (otherEmpty === emptyIdx) continue;
+                    if (this.isValidPlacement(this.board, Math.floor(otherEmpty / 9), otherEmpty % 9, num)) {
+                        // 还要检查是否在笼子内已存在
+                        let inCage = false;
+                        for (const cellIdx of cage.cells) {
+                            if (this.board[cellIdx] === num) {
+                                inCage = true;
+                                break;
+                            }
+                        }
+                        if (!inCage) {
+                            canPlaceElsewhere = true;
+                            break;
+                        }
+                    }
+                }
+                if (!canPlaceElsewhere) {
+                    results.push({
+                        cell: emptyIdx,
+                        number: num,
+                        reason: '此数字在笼子内只能填在这个位置'
+                    });
+                    break;
+                }
+            }
+        }
+
+        return results;
     }
 
     getCandidates(index) {
@@ -871,6 +996,7 @@ class SudokuGame {
 
     displayHint(hintInfo) {
         const panel = document.getElementById('hintPanel');
+        const overlay = document.getElementById('hintOverlay');
         const body = document.getElementById('hintBody');
         const moreBtn = document.getElementById('showMoreHint');
 
@@ -881,45 +1007,78 @@ class SudokuGame {
         const colNum = hintInfo.col + 1;
         const boxNum = Math.floor(hintInfo.row / 3) * 3 + Math.floor(hintInfo.col / 3) + 1;
 
-        html += `<div class="hint-step">
-            <span class="hint-step-number">1</span>
-            <span class="hint-step-text">
-                观察第 <span class="hint-highlight-text">${rowNum}</span> 行第 <span class="hint-highlight-text">${colNum}</span> 列的格子（第 ${boxNum} 宫）
-            </span>
-        </div>`;
+        // 杀手数独提示
+        if (this.gameMode === 'killer') {
+            const cage = this.findCage(hintInfo.cell);
+
+            html += `<div class="hint-step">
+                <span class="hint-step-number">1</span>
+                <span class="hint-step-text">
+                    杀手数独规则：每个<span class="hint-highlight-text">笼子</span>内的数字之和必须等于左上角的数字，且同一笼子内数字不能重复
+                </span>
+            </div>`;
+
+            html += `<div class="hint-step">
+                <span class="hint-step-number">2</span>
+                <span class="hint-step-text">
+                    观察 <span class="hint-highlight-text">${rowNum}行${colNum}列</span> 的格子（第 ${boxNum} 宫），此格在一个 ${cage?.cells.length || 2} 格的笼子中
+                </span>
+            </div>`;
+        } else {
+            html += `<div class="hint-step">
+                <span class="hint-step-number">1</span>
+                <span class="hint-step-text">
+                    观察第 <span class="hint-highlight-text">${rowNum}</span> 行第 <span class="hint-highlight-text">${colNum}</span> 列的格子（第 ${boxNum} 宫）
+                </span>
+            </div>`;
+        }
 
         if (this.hintLevel >= 1) {
-            if (hintInfo.type === 'naked_single') {
+            if (hintInfo.type === 'cage_single') {
                 html += `<div class="hint-step">
-                    <span class="hint-step-number">2</span>
+                    <span class="hint-step-number">3</span>
+                    <span class="hint-step-text">
+                        笼子总和 <span class="hint-highlight-text">${hintInfo.cageSum}</span>，已填入 <span class="hint-highlight-text">${hintInfo.currentSum}</span>，只剩一个空格，必填 <span class="hint-highlight-text">${hintInfo.value}</span>
+                    </span>
+                </div>`;
+            } else if (hintInfo.type === 'cage_required') {
+                html += `<div class="hint-step">
+                    <span class="hint-step-number">3</span>
+                    <span class="hint-step-text">
+                        ${hintInfo.reason}
+                    </span>
+                </div>`;
+            } else if (hintInfo.type === 'naked_single') {
+                html += `<div class="hint-step">
+                    <span class="hint-step-number">3</span>
                     <span class="hint-step-text">
                         分析这个格子所在的行、列和宫格，排除已有的数字后，只剩下 <span class="hint-highlight-text">一个</span> 可能的数字
                     </span>
                 </div>`;
             } else if (hintInfo.type === 'hidden_single_row') {
                 html += `<div class="hint-step">
-                    <span class="hint-step-number">2</span>
+                    <span class="hint-step-number">3</span>
                     <span class="hint-step-text">
                         在第 <span class="hint-highlight-text">${rowNum}</span> 行中，有一个数字只能填在这个位置
                     </span>
                 </div>`;
             } else if (hintInfo.type === 'hidden_single_col') {
                 html += `<div class="hint-step">
-                    <span class="hint-step-number">2</span>
+                    <span class="hint-step-number">3</span>
                     <span class="hint-step-text">
                         在第 <span class="hint-highlight-text">${colNum}</span> 列中，有一个数字只能填在这个位置
                     </span>
                 </div>`;
             } else if (hintInfo.type === 'hidden_single_box') {
                 html += `<div class="hint-step">
-                    <span class="hint-step-number">2</span>
+                    <span class="hint-step-number">3</span>
                     <span class="hint-step-text">
                         在第 <span class="hint-highlight-text">${boxNum}</span> 宫中，有一个数字只能填在这个位置
                     </span>
                 </div>`;
             } else {
                 html += `<div class="hint-step">
-                    <span class="hint-step-number">2</span>
+                    <span class="hint-step-number">3</span>
                     <span class="hint-step-text">
                         这个格子的候选数字有：<span class="hint-highlight-text">${hintInfo.candidates.join(', ')}</span>
                     </span>
@@ -928,8 +1087,9 @@ class SudokuGame {
         }
 
         if (this.hintLevel >= 2) {
+            const stepNum = this.gameMode === 'killer' ? '4' : '3';
             html += `<div class="hint-step">
-                <span class="hint-step-number">3</span>
+                <span class="hint-step-number">${stepNum}</span>
                 <span class="hint-step-text">
                     答案是 <span class="hint-highlight-text">${hintInfo.value}</span>
                 </span>
@@ -938,7 +1098,7 @@ class SudokuGame {
             // 自动填入答案
             this.board[hintInfo.cell] = hintInfo.value;
             this.notes[hintInfo.cell].clear();
-            this.hintCells.add(hintInfo.cell); // 标记为提示填入
+            this.hintCells.add(hintInfo.cell);
 
             // 检测完成并播放音效/特效
             const completionLevel = this.checkCompletion(hintInfo.cell);
@@ -959,6 +1119,7 @@ class SudokuGame {
 
         body.innerHTML = html;
         panel.classList.add('show');
+        overlay.classList.add('show');
     }
 
     showMoreHint() {
@@ -1003,6 +1164,7 @@ class SudokuGame {
 
     closeHint() {
         document.getElementById('hintPanel').classList.remove('show');
+        document.getElementById('hintOverlay').classList.remove('show');
         const cells = document.querySelectorAll('.sudoku-cell');
         cells.forEach(cell => {
             cell.classList.remove('hint-highlight', 'hint-target');
