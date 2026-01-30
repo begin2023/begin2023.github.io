@@ -303,20 +303,29 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--code-bg);
+    background: var(--theme);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--content);
+    border-radius: 10px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    user-select: none;
 }
 
 .num-btn:hover {
     background: var(--primary);
     border-color: var(--primary);
     color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(var(--primary-rgb, 99, 102, 241), 0.3);
+}
+
+.num-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .num-btn.erase-btn {
