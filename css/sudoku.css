@@ -277,7 +277,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    padding: 10px 3px 3px 10px; /* 上右下左：增大左上角空间，避开笼子数字 */
+    padding: 6px 1px 1px 6px; /* 左上角留空避开笼子数字 */
     box-sizing: border-box;
 }
 
@@ -285,9 +285,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(0.4rem, 1.5vw, 0.55rem);
+    font-size: clamp(0.28rem, 1vw, 0.4rem); /* 缩小字号防止溢出 */
     color: var(--secondary);
-    font-weight: 500;
+    font-weight: 600;
+    line-height: 1;
+    overflow: hidden;
 }
 
 /* 数字输入面板 */
