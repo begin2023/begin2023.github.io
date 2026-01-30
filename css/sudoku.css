@@ -176,26 +176,37 @@
 }
 
 /* 杀手数独笼子样式 */
-.sudoku-cell.cage-top {
-    border-top: 3px dashed var(--primary);
+.sudoku-cell::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 5;
 }
 
-.sudoku-cell.cage-bottom {
-    border-bottom: 3px dashed var(--primary);
+.sudoku-cell.cage-top::after {
+    border-top: 2px dashed var(--primary);
 }
 
-.sudoku-cell.cage-left {
-    border-left: 3px dashed var(--primary);
+.sudoku-cell.cage-bottom::after {
+    border-bottom: 2px dashed var(--primary);
 }
 
-.sudoku-cell.cage-right {
-    border-right: 3px dashed var(--primary);
+.sudoku-cell.cage-left::after {
+    border-left: 2px dashed var(--primary);
+}
+
+.sudoku-cell.cage-right::after {
+    border-right: 2px dashed var(--primary);
 }
 
 .sudoku-cell .cage-sum {
     position: absolute;
-    top: 2px;
-    left: 2px;
+    top: 4px;
+    left: 4px;
     font-size: 0.7rem; /* 增大字号 */
     font-weight: 800;  /* 加粗 */
     color: var(--primary);
