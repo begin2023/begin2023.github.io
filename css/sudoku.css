@@ -205,9 +205,9 @@
 
 .sudoku-cell .cage-sum {
     position: absolute;
-    top: 4px;
-    left: 4px;
-    font-size: 0.7rem; /* 增大字号 */
+    top: 2px;
+    left: 2px;
+    font-size: 0.65rem; /* 增大字号 */
     font-weight: 800;  /* 加粗 */
     color: var(--primary);
     line-height: 1;
@@ -277,6 +277,8 @@
     position: absolute;
     top: 0;
     left: 0;
+    padding: 2px;
+    box-sizing: border-box;
 }
 
 .sudoku-cell .note {
