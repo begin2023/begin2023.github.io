@@ -46,17 +46,10 @@
 
     /* 调整数字键盘在侧边栏的布局 */
     .number-pad {
-        grid-template-columns: repeat(3, 1fr); /* 改为3列，更像小键盘 */
+        grid-template-columns: repeat(5, 1fr); /* 5列布局，让删除键在9后面 */
         gap: 10px;
     }
 
-    /* 让 0/删除键 占据一行或者合适位置 */
-    .num-btn:last-child {
-        grid-column: span 3; /* 删除键占据整行 */
-        aspect-ratio: auto;
-        height: 52px;
-    }
-    
     /* 游戏控制区紧凑排列 */
     .game-controls {
         gap: 12px;
