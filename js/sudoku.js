@@ -320,45 +320,42 @@ class SudokuGame {
     }
 
     createStandardCages() {
-        // 标准杀手数独笼子布局
-        // 每个宫格内有2-4个笼子
+        // 生成杀手数独的笼子
         this.cages = [];
 
-        const boxCageLayouts = [
-            // 每个3x3宫格内的笼子模式
-            [
-                { cells: [0, 1, 3, 4], sum: 0 }, // 宫格左上2x2
-                { cells: [2, 5], sum: 0 },           // 右上两格
-                { cells: [6, 7], sum: 0 },           // 左下两格
-                { cells: [8], sum: 0 }              // 右下单格
-            ],
-            [
-                { cells: [0, 1], sum: 0 },
-                { cells: [2, 3], sum: 0 },
-                { cells: [4, 5, 6], sum: 0 },
-                { cells: [7, 8], sum: 0 }
-            ]
+        // 使用预定义的笼子布局，确保笼子可以跨宫格
+        // 每个格子属于一个笼子，用数组表示9x9网格的笼子分配
+        const cageMap = [
+            [0, 0, 0, 1, 1, 1, 2, 2, 2],
+            [0, 0, 0, 1, 1, 1, 2, 2, 2],
+            [0, 0, 3, 3, 1, 1, 2, 2, 2],
+            [0, 0, 3, 3, 3, 4, 4, 5, 5],
+            [4, 4, 3, 3, 3, 4, 4, 5, 5],
+            [4, 4, 6, 6, 4, 5, 5, 5, 5],
+            [4, 4, 6, 6, 7, 7, 8, 8, 8],
+            [6, 6, 6, 7, 7, 7, 8, 8, 8],
+            [6, 6, 6, 7, 7, 7, 8, 8, 8],
         ];
 
-        // 为每个3x3宫格生成笼子
-        for (let box = 0; box < 9; box++) {
-            const layout = boxCageLayouts[box % 2];
-            const boxRow = Math.floor(box / 3) * 3;
-            const boxCol = (box % 3) * 3;
-
-            for (const cage of layout) {
-                const globalCells = cage.cells.map(local => {
-                    const localRow = Math.floor(local / 3);
-                    const localCol = local % 3;
-                    return (boxRow + localRow) * 9 + (boxCol + localCol);
-                });
-
-                this.cages.push({
-                    cells: globalCells,
-                    sum: 0
-                });
+        // 将笼子映射转换为笼子对象数组
+        const cageCells = {};
+        for (let row = 0; row < 9; row++) {
+            for (let col = 0; col < 9; col++) {
+                const cageId = cageMap[row][col];
+                const cellIndex = row * 9 + col;
+                if (!cageCells[cageId]) {
+                    cageCells[cageId] = [];
+                }
+                cageCells[cageId].push(cellIndex);
             }
         }
+
+        // 创建笼子对象
+        this.cages = Object.entries(cageCells).map(([id, cells]) => ({
+            id: parseInt(id),
+            cells: cells,
+            sum: 0
+        }));
 
         // 计算每个笼子的总和（基于完整解）
         for (const cage of this.cages) {
@@ -389,11 +386,11 @@ class SudokuGame {
         // 验证唯一解
         if (!this.hasUniqueSolution(this.board)) {
             // 如果不唯一，尝试调整
-            this.adjustForUniqueSolution(fillCount);
+            this.adjustForUniqueSolution();
         }
     }
 
-    adjustForUniqueSolution(fillCount) {
+    adjustForUniqueSolution() {
         // 通过调整来确保唯一解
         const emptyCells = this.board.map((val, idx) => val === 0 ? idx : -1).filter(i => i !== -1);
 
@@ -891,8 +888,6 @@ class SudokuGame {
         const emptyCells = cage.cells.filter(idx => this.board[idx] === 0);
 
         for (const emptyIdx of emptyCells) {
-            const row = Math.floor(emptyIdx / 9);
-            const col = emptyIdx % 9;
             const candidates = this.getCandidates(emptyIdx).filter(n => {
                 // 过滤掉笼子内已有的数字
                 for (const cellIdx of cage.cells) {
@@ -900,13 +895,6 @@ class SudokuGame {
                 }
                 return true;
             });
-
-            // 计算笼子剩余需要达到的和
-            let currentSum = 0;
-            for (const cellIdx of cage.cells) {
-                currentSum += this.board[cellIdx];
-            }
-            const remainingSum = cage.sum - currentSum;
 
             // 检查是否有某个数字只能在这个位置
             for (const num of candidates) {
@@ -1182,36 +1170,49 @@ class SudokuGame {
 
         // 为每个笼子添加边框和总和数字
         for (const cage of this.cages) {
-            const firstCell = cage.cells[0];
+            // 找到笼子中行号最小、列号最小的格子（左上角）
+            let topLeftCell = cage.cells[0];
+            let minRow = 9, minCol = 9;
+            for (const cellIdx of cage.cells) {
+                const row = Math.floor(cellIdx / 9);
+                const col = cellIdx % 9;
+                if (row < minRow || (row === minRow && col < minCol)) {
+                    minRow = row;
+                    minCol = col;
+                    topLeftCell = cellIdx;
+                }
+            }
 
-            // 添加总和数字到第一个格子
+            // 添加总和数字到左上角格子
             const sumEl = document.createElement('span');
             sumEl.className = 'cage-sum';
             sumEl.textContent = cage.sum;
-            cells[firstCell].appendChild(sumEl);
+            cells[topLeftCell].appendChild(sumEl);
 
             // 添加笼子边框
             const rows = new Set(cage.cells.map(c => Math.floor(c / 9)));
             const cols = new Set(cage.cells.map(c => c % 9));
-            const minRow = Math.min(...rows);
             const maxRow = Math.max(...rows);
-            const minCol = Math.min(...cols);
             const maxCol = Math.max(...cols);
 
             for (const cellIdx of cage.cells) {
                 const row = Math.floor(cellIdx / 9);
                 const col = cellIdx % 9;
 
-                if (row === minRow && !cage.cells.includes(cellIdx - 9)) {
+                // 检查上边：如果在笼子顶部，且上方的格子不在同一笼子中
+                if (row === minRow && (row === 0 || !cage.cells.includes(cellIdx - 9))) {
                     cells[cellIdx].classList.add('cage-top');
                 }
-                if (row === maxRow && !cage.cells.includes(cellIdx + 9)) {
+                // 检查下边：如果在笼子底部，且下方的格子不在同一笼子中
+                if (row === maxRow && (row === 8 || !cage.cells.includes(cellIdx + 9))) {
                     cells[cellIdx].classList.add('cage-bottom');
                 }
-                if (col === minCol && !cage.cells.includes(cellIdx - 1)) {
+                // 检查左边：如果在笼子左侧，且左侧的格子不在同一笼子中
+                if (col === minCol && (col === 0 || !cage.cells.includes(cellIdx - 1) || Math.floor((cellIdx - 1) / 9) !== row)) {
                     cells[cellIdx].classList.add('cage-left');
                 }
-                if (col === maxCol && !cage.cells.includes(cellIdx + 1)) {
+                // 检查右边：如果在笼子右侧，且右侧的格子不在同一笼子中
+                if (col === maxCol && (col === 8 || !cage.cells.includes(cellIdx + 1) || Math.floor((cellIdx + 1) / 9) !== row)) {
                     cells[cellIdx].classList.add('cage-right');
                 }
             }
