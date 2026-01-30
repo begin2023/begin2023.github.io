@@ -939,6 +939,7 @@ class SudokuGame {
         const colNum = hintInfo.col + 1;
         const boxNum = Math.floor(hintInfo.row / 3) * 3 + Math.floor(hintInfo.col / 3) + 1;
 
+        // 通用位置提示
         html += `<div class="hint-step">
             <span class="hint-step-number">1</span>
             <span class="hint-step-text">
@@ -946,7 +947,48 @@ class SudokuGame {
             </span>
         </div>`;
 
+        // 杀手数独特有提示逻辑
+        let killerHint = '';
+        if (this.gameMode === 'killer') {
+            const cage = this.findCage(hintInfo.cell);
+            if (cage) {
+                // 计算笼子当前状态
+                let currentSum = 0;
+                let filledCount = 0;
+                let unknownCells = 0;
+                const cageValues = [];
+                
+                for (const cellIdx of cage.cells) {
+                    const val = this.board[cellIdx];
+                    if (val !== 0) {
+                        currentSum += val;
+                        filledCount++;
+                        cageValues.push(val);
+                    } else {
+                        unknownCells++;
+                    }
+                }
+                
+                const remainingSum = cage.sum - currentSum;
+
+                killerHint = `<div class="hint-step">
+                    <span class="hint-step-number">💡</span>
+                    <span class="hint-step-text">
+                        <strong>杀手笼子线索：</strong><br>
+                        该笼子目标和为 <span class="hint-highlight-text">${cage.sum}</span>。<br>
+                        ${filledCount > 0 ? `已填数字和为 ${currentSum}，` : ''}
+                        剩余 ${unknownCells} 格需要凑出 <span class="hint-highlight-text">${remainingSum}</span>。
+                    </span>
+                </div>`;
+            }
+        }
+
         if (this.hintLevel >= 1) {
+            // 在第二阶段提示中插入杀手数独线索
+            if (killerHint) {
+                html += killerHint;
+            }
+
             if (hintInfo.type === 'naked_single') {
                 html += `<div class="hint-step">
                     <span class="hint-step-number">2</span>
@@ -1128,11 +1170,6 @@ class SudokuGame {
 
         const selectedNum = this.selectedCell !== null ? this.board[this.selectedCell] : null;
 
-        // 绘制杀手数独笼子
-        if (this.gameMode === 'killer') {
-            this.renderCages(cells);
-        }
-
         cells.forEach((cell, index) => {
             const value = this.board[index];
             const isGiven = this.initialBoard[index] !== 0;
@@ -1185,6 +1222,11 @@ class SudokuGame {
         });
 
         this.updateNumberPad();
+
+        // 绘制杀手数独笼子（必须在内容填充后绘制，否则数字和会被覆盖）
+        if (this.gameMode === 'killer') {
+            this.renderCages(cells);
+        }
     }
 
     updateNumberPad() {
