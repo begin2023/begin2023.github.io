@@ -31,6 +31,7 @@
 
     .sudoku-main {
         max-width: 600px;
+        width: 100%;
         justify-self: center;
     }
 
@@ -52,6 +53,8 @@
     /* 让 0/删除键 占据一行或者合适位置 */
     .num-btn:last-child {
         grid-column: span 3; /* 删除键占据整行 */
+        aspect-ratio: auto;
+        height: 52px;
     }
     
     /* 游戏控制区紧凑排列 */
@@ -215,6 +218,8 @@
     overflow: hidden;
     margin-bottom: 16px;
     aspect-ratio: 1;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .sudoku-cell {
