@@ -3,12 +3,77 @@
 .sudoku-container {
     max-width: 420px; /* 默认移动端尺寸 */
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-/* 桌面端增大棋盘尺寸 */
-@media (min-width: 768px) {
+.sudoku-main {
+    width: 100%;
+}
+
+.sudoku-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* 桌面端布局优化：左右分栏 */
+@media (min-width: 900px) {
     .sudoku-container {
+        max-width: 1000px;
+        display: grid;
+        grid-template-columns: 1fr 320px; /* 左侧棋盘自适应，右侧固定宽度 */
+        gap: 40px;
+        align-items: start;
+        padding: 20px;
+    }
+
+    .sudoku-main {
         max-width: 600px;
+        justify-self: center;
+    }
+
+    .sudoku-sidebar {
+        position: sticky;
+        top: 20px;
+        background: var(--code-bg); /* 添加背景使其更像一个面板 */
+        padding: 24px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+    }
+
+    /* 调整数字键盘在侧边栏的布局 */
+    .number-pad {
+        grid-template-columns: repeat(3, 1fr); /* 改为3列，更像小键盘 */
+        gap: 10px;
+    }
+
+    /* 让 0/删除键 占据一行或者合适位置 */
+    .num-btn:last-child {
+        grid-column: span 3; /* 删除键占据整行 */
+    }
+    
+    /* 游戏控制区紧凑排列 */
+    .game-controls {
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .difficulty-selector {
+        justify-content: space-between;
+    }
+    
+    .diff-btn {
+        flex: 1;
+        text-align: center;
+    }
+    
+    /* 状态栏垂直排列优化 */
+    .game-stats {
+        margin-bottom: 20px;
+        background: var(--theme); /* 在侧边栏内部反色 */
+        border: 1px solid var(--border);
     }
 }
 
