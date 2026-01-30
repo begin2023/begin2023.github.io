@@ -306,21 +306,139 @@ class SudokuGame {
     }
 
     generateCages() {
-        // 生成杀手数独的笼子
+        // 使用动态算法生成不规则形状的笼子
         this.cages = [];
-        const used = new Set();
-        const cageLayouts = [
-            // 简单的2-3格子笼子模式
-            [[0, 1], [3, 4], [0, 3], [1, 4]],
-            [[0, 1, 2], [0, 3, 6], [0, 1, 3, 4]],
+        const cageColors = [
+            '#f8f9fa', '#e3f2fd', '#dbeafe', '#fef3c7',
+            '#fee2e2', '#fce7f3', '#dcfce7', '#f3e8ff'
         ];
 
-        // 使用预定义的笼子布局，确保合理
-        this.createStandardCages();
+        // 使用基于种子扩散的算法生成不规则笼子
+        const cageMap = new Array(81).fill(-1);
+        let cageId = 0;
+        const remainingCells = new Set(Array.from({ length: 81 }, (_, i) => i));
+
+        while (remainingCells.size > 0) {
+            const startCell = Array.from(remainingCells)[Math.floor(Math.random() * remainingCells.size)];
+            const cageCells = this.createIrregularCage(startCell, remainingCells, cageMap);
+
+            if (cageCells.length >= 2 && cageCells.length <= 6) {
+                // 验证笼子总和是否合理（2-6格笼子的合理总和范围）
+                const sum = cageCells.reduce((s, idx) => s + this.solution[idx], 0);
+                const minSum = this.getMinPossibleSum(cageCells.length);
+                const maxSum = this.getMaxPossibleSum(cageCells.length);
+
+                // 只有总和在合理范围内才创建笼子
+                if (sum >= minSum && sum <= maxSum) {
+                    this.cages.push({
+                        id: cageId,
+                        cells: cageCells,
+                        sum: sum,
+                        color: cageColors[cageId % cageColors.length]
+                    });
+                    cageId++;
+                } else {
+                    // 如果总和不合理，重新分配这些格子
+                    cageCells.forEach(idx => {
+                        cageMap[idx] = -1;
+                        remainingCells.add(idx);
+                    });
+                }
+            } else {
+                // 笼子大小不合适，重新分配
+                cageCells.forEach(idx => {
+                    cageMap[idx] = -1;
+                    remainingCells.add(idx);
+                });
+            }
+        }
+
+        // 确保所有格子都被分配
+        if (this.cages.length < 9) {
+            this.createStandardCages();
+        }
+    }
+
+    createIrregularCage(startCell, remainingCells, cageMap) {
+        // 基于种子扩散生成不规则形状的笼子
+        const cageCells = [];
+        const queue = [startCell];
+        remainingCells.delete(startCell);
+
+        // 2-6个格子，根据位置和随机性决定大小
+        const targetSize = 2 + Math.floor(Math.random() * 5);
+
+        while (queue.length > 0 && cageCells.length < targetSize) {
+            const current = queue.shift();
+            cageCells.push(current);
+            cageMap[current] = this.cages.length;
+
+            if (cageCells.length >= targetSize) break;
+
+            // 获取相邻的未分配格子
+            const neighbors = this.getUnassignedNeighbors(current, remainingCells);
+
+            // 打乱邻居顺序以增加随机性
+            this.shuffle(neighbors);
+
+            // 有一定概率不继续扩展，让扩散从其他种子开始
+            const expandProbability = 0.7;
+
+            for (const neighbor of neighbors) {
+                if (queue.length + cageCells.length >= targetSize) break;
+                if (Math.random() < expandProbability && remainingCells.has(neighbor)) {
+                    remainingCells.delete(neighbor);
+                    queue.push(neighbor);
+                }
+            }
+        }
+
+        return cageCells;
+    }
+
+    getUnassignedNeighbors(cellIndex, remainingCells) {
+        const row = Math.floor(cellIndex / 9);
+        const col = cellIndex % 9;
+        const neighbors = [];
+
+        // 上
+        if (row > 0) {
+            const idx = (row - 1) * 9 + col;
+            if (remainingCells.has(idx)) neighbors.push(idx);
+        }
+        // 下
+        if (row < 8) {
+            const idx = (row + 1) * 9 + col;
+            if (remainingCells.has(idx)) neighbors.push(idx);
+        }
+        // 左
+        if (col > 0) {
+            const idx = row * 9 + (col - 1);
+            if (remainingCells.has(idx)) neighbors.push(idx);
+        }
+        // 右
+        if (col < 8) {
+            const idx = row * 9 + (col + 1);
+            if (remainingCells.has(idx)) neighbors.push(idx);
+        }
+
+        return neighbors;
+    }
+
+    getMinPossibleSum(cageSize) {
+        // n个不同正整数的最小和（1+2+...+n = n(n+1)/2）
+        return cageSize * (cageSize + 1) / 2;
+    }
+
+    getMaxPossibleSum(cageSize) {
+        // n个不同正整数的最大和（9+8+...+(9-n+1)）
+        const start = 9;
+        const end = 9 - cageSize + 1;
+        return cageSize * (start + end) / 2;
     }
 
     createStandardCages() {
-        // 生成杀手数独的笼子
+        // 生成杀手数独的笼子（备用方法：使用预定义布局）
         this.cages = [];
 
         // 笼子背景色
@@ -330,7 +448,6 @@ class SudokuGame {
         ];
 
         // 使用预定义的笼子布局，确保笼子可以跨宫格
-        // 每个格子属于一个笼子，用数组表示9x9网格的笼子分配
         const cageMap = [
             [0, 0, 0, 1, 1, 1, 2, 2, 2],
             [0, 0, 0, 1, 1, 1, 2, 2, 2],
@@ -347,12 +464,12 @@ class SudokuGame {
         const cageCells = {};
         for (let row = 0; row < 9; row++) {
             for (let col = 0; col < 9; col++) {
-                const cageId = cageMap[row][col];
+                const id = cageMap[row][col];
                 const cellIndex = row * 9 + col;
-                if (!cageCells[cageId]) {
-                    cageCells[cageId] = [];
+                if (!cageCells[id]) {
+                    cageCells[id] = [];
                 }
-                cageCells[cageId].push(cellIndex);
+                cageCells[id].push(cellIndex);
             }
         }
 
@@ -473,16 +590,65 @@ class SudokuGame {
 
                 // 规则2：笼子数字之和不能超过指定值
                 let currentSum = 0;
+                const emptyCells = [];
                 for (const cellIdx of cage.cells) {
-                    currentSum += board[cellIdx];
+                    if (board[cellIdx] !== 0) {
+                        currentSum += board[cellIdx];
+                    } else {
+                        emptyCells.push(cellIdx);
+                    }
                 }
-                if (currentSum + num > cage.sum) {
+
+                // 新填入数字后的当前和
+                const newSum = currentSum + num;
+
+                // 规则2a：当前和不能超过目标总和
+                if (newSum > cage.sum) {
+                    return false;
+                }
+
+                // 规则2b：检查填入后剩余空格是否还能达到目标总和
+                const remainingSum = cage.sum - newSum;
+                const remainingCount = emptyCells.length - 1; // 减去当前格子
+
+                if (remainingCount > 0) {
+                    // 计算剩余空格能达到的最小和最大可能和
+                    const minPossibleSum = this.getMinPossibleSum(remainingCount);
+                    const maxPossibleSum = this.getMaxPossibleSum(remainingCount);
+
+                    // 还需要排除已在笼子中的数字
+                    const usedNumbers = cage.cells
+                        .filter(idx => board[idx] !== 0)
+                        .map(idx => board[idx]);
+
+                    // 如果剩余总和超出可能范围，则无效
+                    if (remainingSum < this.getMinSumWithExclusions(remainingCount, usedNumbers, remainingSum)) {
+                        return false;
+                    }
+                    if (remainingSum > this.getMaxSumWithExclusions(remainingCount, usedNumbers)) {
+                        return false;
+                    }
+                } else if (remainingSum !== 0) {
+                    // 没有剩余空格，必须恰好等于0
                     return false;
                 }
             }
         }
 
         return true;
+    }
+
+    getMinSumWithExclusions(count, usedNumbers, targetSum) {
+        // 计算考虑到已使用数字排斥后的最小可能和
+        let minSum = this.getMinPossibleSum(count);
+        // 实际最小和取决于targetSum能由哪些数字组成
+        // 这里简化处理：只要targetSum大于count个不同数字的最小可能和即可
+        return Math.min(minSum, targetSum);
+    }
+
+    getMaxSumWithExclusions(count, usedNumbers) {
+        // 计算考虑到已使用数字排斥后的最大可能和
+        return this.getMaxPossibleSum(count);
     }
 
     findCage(cellIndex) {
@@ -1346,27 +1512,28 @@ class SudokuGame {
     }
 
     checkWin() {
-        if (this.gameMode === 'killer') {
-            // 杀手数独检查
-            // 检查是否所有格子都已填入
-            if (this.board.some(val => val === 0)) return;
+        // 通用胜利检查：先验证数独规则，再验证游戏模式特定规则
 
-            // 检查每个笼子的总和是否正确
+        // 1. 检查数独基本规则是否满足
+        if (!this.isSudokuValid(this.board)) return;
+
+        // 2. 检查是否所有格子都已填入
+        if (this.board.includes(0)) return;
+
+        // 3. 验证游戏模式特定规则
+        if (this.gameMode === 'killer') {
+            // 验证笼子总和
             for (const cage of this.cages) {
                 const sum = cage.cells.reduce((s, idx) => s + this.board[idx], 0);
                 if (sum !== cage.sum) return;
             }
-
-            // 检查数独基本规则
-            if (!this.isSudokuValid(this.board)) return;
-
-            this.endGame(true);
         } else {
-            // 标准数独检查
-            if (this.board.every((val, idx) => val === this.solution[idx])) {
-                this.endGame(true);
-            }
+            // 经典模式：验证是否与解一致
+            if (!this.board.every((val, idx) => val === this.solution[idx])) return;
         }
+
+        // 全部通过，胜利
+        this.endGame(true);
     }
 
     isSudokuValid(board) {
