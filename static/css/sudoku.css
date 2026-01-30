@@ -194,14 +194,15 @@
 
 .sudoku-cell .cage-sum {
     position: absolute;
-    top: 1px;
+    top: 2px;
     left: 2px;
-    font-size: 0.55rem;
-    font-weight: 700;
+    font-size: 0.7rem; /* 增大字号 */
+    font-weight: 800;  /* 加粗 */
     color: var(--primary);
     line-height: 1;
     pointer-events: none;
-    z-index: 10;
+    z-index: 20; /* 提高层级 */
+    text-shadow: 1px 1px 0 var(--theme), -1px -1px 0 var(--theme), 1px -1px 0 var(--theme), -1px 1px 0 var(--theme); /* 添加描边效果增加对比度 */
 }
 
 .sudoku-cell .given {
@@ -352,41 +353,70 @@
     font-size: 1rem;
 }
 
-/* 提示面板 */
+/* 提示面板 - 优化版 */
 .hint-panel {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+    z-index: 900;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+    pointer-events: none; /* 隐藏时不阻挡点击 */
 }
 
-.hint-panel.show {
-    opacity: 1;
-    visibility: visible;
+/* 桌面端：显示在棋盘右侧 */
+@media (min-width: 1024px) {
+    .hint-panel {
+        top: 50%;
+        right: 20px;
+        transform: translateY(-50%) translateX(20px);
+        bottom: auto;
+        left: auto;
+    }
+
+    .hint-panel.show {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+/* 移动端/小屏：显示在底部，不全屏遮罩 */
+@media (max-width: 1023px) {
+    .hint-panel {
+        top: auto;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        width: 90%;
+        max-width: 400px;
+    }
+
+    .hint-panel.show {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateX(-50%) translateY(0);
+    }
 }
 
 .hint-content {
     background: var(--theme);
     border-radius: 12px;
-    padding: 20px;
-    max-width: 360px;
-    width: 90%;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    transform: translateY(20px);
-    transition: transform 0.3s ease;
+    padding: 16px;
+    width: 320px; /* 固定宽度，避免太大 */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border);
+    max-height: 80vh; /* 防止内容过长溢出 */
+    overflow-y: auto;
 }
 
-.hint-panel.show .hint-content {
-    transform: translateY(0);
+/* 移动端调整宽度 */
+@media (max-width: 1023px) {
+    .hint-content {
+        width: 100%;
+        max-height: 40vh; /* 移动端限制高度，避免遮挡太多 */
+    }
 }
 
 .hint-header {
