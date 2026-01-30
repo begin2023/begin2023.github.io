@@ -277,7 +277,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    padding: 2px;
+    padding: 10px 3px 3px 10px; /* 上右下左：增大左上角空间，避开笼子数字 */
     box-sizing: border-box;
 }
 
