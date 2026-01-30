@@ -323,6 +323,12 @@ class SudokuGame {
         // 生成杀手数独的笼子
         this.cages = [];
 
+        // 笼子背景色
+        const cageColors = [
+            '#f8f9fa', '#e3f2fd', '#dbeafe', '#fef3c7',
+            '#fee2e2', '#fce7f3', '#dcfce7', '#f3e8ff'
+        ];
+
         // 使用预定义的笼子布局，确保笼子可以跨宫格
         // 每个格子属于一个笼子，用数组表示9x9网格的笼子分配
         const cageMap = [
@@ -354,7 +360,8 @@ class SudokuGame {
         this.cages = Object.entries(cageCells).map(([id, cells]) => ({
             id: parseInt(id),
             cells: cells,
-            sum: 0
+            sum: 0,
+            color: cageColors[parseInt(id) % cageColors.length]
         }));
 
         // 计算每个笼子的总和（基于完整解）
@@ -1163,7 +1170,8 @@ class SudokuGame {
     renderCages(cells) {
         // 移除所有笼子相关的 class
         cells.forEach(cell => {
-            cell.classList.remove('cage-top', 'cage-bottom', 'cage-left', 'cage-right');
+            cell.classList.remove('cage-top', 'cage-bottom', 'cage-left', 'cage-right', 'cage-bg');
+            cell.style.removeProperty('--cage-color');
             const cageSum = cell.querySelector('.cage-sum');
             if (cageSum) cageSum.remove();
         });
@@ -1181,6 +1189,12 @@ class SudokuGame {
                     minCol = col;
                     topLeftCell = cellIdx;
                 }
+            }
+
+            // 为笼子中的所有格子添加背景色
+            for (const cellIdx of cage.cells) {
+                cells[cellIdx].style.setProperty('--cage-color', cage.color);
+                cells[cellIdx].classList.add('cage-bg');
             }
 
             // 添加总和数字到左上角格子

@@ -176,20 +176,24 @@
 }
 
 /* 杀手数独笼子样式 */
+.sudoku-cell.cage-bg {
+    background: var(--cage-color) !important;
+}
+
 .sudoku-cell.cage-top {
-    border-top: 2px dashed #999;
+    border-top: 2px dashed #666 !important;
 }
 
 .sudoku-cell.cage-bottom {
-    border-bottom: 2px dashed #999;
+    border-bottom: 2px dashed #666 !important;
 }
 
 .sudoku-cell.cage-left {
-    border-left: 2px dashed #999;
+    border-left: 2px dashed #666 !important;
 }
 
 .sudoku-cell.cage-right {
-    border-right: 2px dashed #999;
+    border-right: 2px dashed #666 !important;
 }
 
 .sudoku-cell .cage-sum {
