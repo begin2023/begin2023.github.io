@@ -217,7 +217,7 @@
 }
 
 .sudoku-cell {
-    aspect-ratio: 1;
+    /* 移除 aspect-ratio，由 grid 容器的 aspect-ratio: 1 和 grid-template-rows/columns 控制 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -230,6 +230,8 @@
     border: 1px solid var(--border);
     position: relative;
     user-select: none;
+    min-width: 0; /* 防止 grid 子元素溢出 */
+    min-height: 0; /* 确保 grid 的 1fr 能正确计算 */
 }
 
 /* 3x3 宫格边框 */
