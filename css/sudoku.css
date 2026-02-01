@@ -204,6 +204,7 @@
 .sudoku-board {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr); /* 明确定义行高度，防止空格子导致尺寸异常 */
     gap: 0;
     background: var(--border);
     border: 2px solid var(--primary);
