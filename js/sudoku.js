@@ -1217,7 +1217,7 @@ class SudokuGame {
                     ).join('') +
                     '</div>';
             } else {
-                cell.textContent = '';
+                cell.innerHTML = '&nbsp;'; // 使用不间断空格占位，确保空格子有正确尺寸
             }
         });
 
