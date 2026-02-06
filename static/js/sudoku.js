@@ -303,29 +303,38 @@ class SudokuGame {
         // 生成杀手数独
         // 1. 先生成完整解
         this.solution = this.generateSolution();
-        this.board = Array(81).fill(0);
-        this.initialBoard = Array(81).fill(0);
+        this.board = [...this.solution];
+        this.initialBoard = [...this.solution];
 
         // 2. 动态生成不规则笼子布局
         this.generateRandomCages();
 
-        // 3. 根据难度决定保留多少数字（杀手数独通常保留较少数字，甚至不保留）
-        let revealCount;
-        switch (this.difficulty) {
-            case 'easy': revealCount = 36; break;   // 简单模式多给点提示
-            case 'medium': revealCount = 20; break;
-            case 'hard': revealCount = 8; break;
-            case 'expert': revealCount = 0; break;  // 专家模式只有笼子和求和
-            default: revealCount = 36;
-        }
+        // 3. 逐个移除数字，每次移除后验证唯一解
+        // 笼子约束提供额外信息，因此可以比经典模式移除更多数字
+        const killerRemoveCount = {
+            easy: 48,
+            medium: 56,
+            hard: 64,
+            expert: 72
+        };
 
+        const removeCount = killerRemoveCount[this.difficulty] || 48;
         const positions = Array.from({ length: 81 }, (_, i) => i);
         this.shuffle(positions);
 
-        for (let i = 0; i < revealCount; i++) {
+        let removed = 0;
+        for (let i = 0; i < 81 && removed < removeCount; i++) {
             const pos = positions[i];
-            this.board[pos] = this.solution[pos];
-            this.initialBoard[pos] = this.solution[pos];
+            const backup = this.board[pos];
+
+            this.board[pos] = 0;
+
+            if (!this.hasUniqueSolutionKiller(this.board)) {
+                this.board[pos] = backup;
+            } else {
+                this.initialBoard[pos] = 0;
+                removed++;
+            }
         }
     }
 
@@ -410,20 +419,50 @@ class SudokuGame {
         return items[Math.floor(Math.random() * items.length)];
     }
 
-    adjustForUniqueSolution(fillCount) {
-        // 通过调整来确保唯一解
-        const emptyCells = this.board.map((val, idx) => val === 0 ? idx : -1).filter(i => i !== -1);
+    hasUniqueSolutionKiller(board) {
+        // 使用 MRV 启发式和节点限制的唯一解检查，适用于杀手数独
+        this._solveNodeCount = 0;
+        this._solveNodeLimit = 50000;
+        return this.countSolutionsKiller(board) === 1;
+    }
 
-        // 尝试添加更多提示
-        let attempts = 0;
-        while (!this.hasUniqueSolution(this.board) && attempts < 20) {
-            const randomEmpty = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-            if (this.board[randomEmpty] === 0) {
-                this.board[randomEmpty] = this.solution[randomEmpty];
-                this.initialBoard[randomEmpty] = this.solution[randomEmpty];
+    countSolutionsKiller(board, limit = 2) {
+        if (this._solveNodeCount >= this._solveNodeLimit) return limit;
+        this._solveNodeCount++;
+
+        // MRV 启发式：选择候选数最少的空格
+        let bestIdx = -1;
+        let bestCount = 10;
+        for (let i = 0; i < 81; i++) {
+            if (board[i] !== 0) continue;
+            const row = Math.floor(i / 9);
+            const col = i % 9;
+            let count = 0;
+            for (let num = 1; num <= 9; num++) {
+                if (this.isValidPlacement(board, row, col, num)) count++;
             }
-            attempts++;
+            if (count === 0) return 0; // 死路
+            if (count < bestCount) {
+                bestCount = count;
+                bestIdx = i;
+                if (count === 1) break; // 只有一个候选，直接用
+            }
         }
+
+        if (bestIdx === -1) return 1; // 所有格子已填满
+
+        const row = Math.floor(bestIdx / 9);
+        const col = bestIdx % 9;
+        let solutions = 0;
+        for (let num = 1; num <= 9; num++) {
+            if (this.isValidPlacement(board, row, col, num)) {
+                board[bestIdx] = num;
+                solutions += this.countSolutionsKiller(board, limit - solutions);
+                board[bestIdx] = 0;
+                if (solutions >= limit) return solutions;
+            }
+        }
+        return solutions;
     }
 
     generateSolution() {
