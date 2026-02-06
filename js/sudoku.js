@@ -903,6 +903,7 @@ class SudokuGame {
     }
 
     findHintableCell(emptyCells) {
+        // 策略1：裸单（Naked Single）- 某格只有一个候选数
         for (const cell of emptyCells) {
             const row = Math.floor(cell / 9);
             const col = cell % 9;
@@ -913,6 +914,7 @@ class SudokuGame {
             }
         }
 
+        // 策略2：隐性单（Hidden Single）- 某数在行/列/宫中只能放在一个位置
         for (const cell of emptyCells) {
             const row = Math.floor(cell / 9);
             const col = cell % 9;
@@ -931,17 +933,126 @@ class SudokuGame {
             }
         }
 
-        const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        const row = Math.floor(randomCell / 9);
-        const col = randomCell % 9;
+        // 策略3（杀手数独）：笼子最后一格 - 笼子只剩一个空格，和值直接确定
+        if (this.gameMode === 'killer') {
+            for (const cell of emptyCells) {
+                const cage = this.findCage(cell);
+                if (!cage) continue;
+
+                const emptyCellsInCage = cage.cells.filter(idx => this.board[idx] === 0);
+                if (emptyCellsInCage.length === 1 && emptyCellsInCage[0] === cell) {
+                    const filledSum = cage.cells.reduce((s, idx) => s + this.board[idx], 0);
+                    const value = cage.sum - filledSum;
+                    const row = Math.floor(cell / 9);
+                    const col = cell % 9;
+                    return { cell, type: 'cage_last_cell', value, row, col, candidates: this.getCandidates(cell), cage };
+                }
+            }
+
+            // 策略4（杀手数独）：笼子隐性单 - 某数在笼子内只能放在一个位置
+            for (const cell of emptyCells) {
+                const cage = this.findCage(cell);
+                if (!cage) continue;
+                const row = Math.floor(cell / 9);
+                const col = cell % 9;
+                const candidates = this.getCandidates(cell);
+
+                for (const num of candidates) {
+                    let onlyPlace = true;
+                    for (const otherIdx of cage.cells) {
+                        if (otherIdx === cell || this.board[otherIdx] !== 0) continue;
+                        const otherRow = Math.floor(otherIdx / 9);
+                        const otherCol = otherIdx % 9;
+                        if (this.isValidPlacement(this.board, otherRow, otherCol, num)) {
+                            onlyPlace = false;
+                            break;
+                        }
+                    }
+                    if (onlyPlace) {
+                        return { cell, type: 'cage_hidden_single', value: num, row, col, candidates, cage };
+                    }
+                }
+            }
+
+            // 策略5（杀手数独）：笼子和值约束 - 笼子剩余格的和值组合只有一种可能
+            for (const cell of emptyCells) {
+                const cage = this.findCage(cell);
+                if (!cage) continue;
+
+                const emptyCellsInCage = cage.cells.filter(idx => this.board[idx] === 0);
+                if (emptyCellsInCage.length < 2 || emptyCellsInCage.length > 4) continue;
+
+                const filledSum = cage.cells.reduce((s, idx) => s + this.board[idx], 0);
+                const remainingSum = cage.sum - filledSum;
+                const usedInCage = new Set(cage.cells.filter(idx => this.board[idx] !== 0).map(idx => this.board[idx]));
+
+                // 获取每个空格的候选数
+                const cellCandidates = emptyCellsInCage.map(idx => ({
+                    idx,
+                    candidates: this.getCandidates(idx)
+                }));
+
+                // 枚举所有合法组合
+                const validCombos = [];
+                this.findCageCombinations(cellCandidates, 0, [], 0, remainingSum, usedInCage, validCombos);
+
+                // 检查目标格在所有合法组合中是否值唯一
+                const cellPos = emptyCellsInCage.indexOf(cell);
+                if (cellPos === -1) continue;
+
+                const possibleValues = new Set(validCombos.map(combo => combo[cellPos]));
+                if (possibleValues.size === 1) {
+                    const value = [...possibleValues][0];
+                    const row = Math.floor(cell / 9);
+                    const col = cell % 9;
+                    return { cell, type: 'cage_sum_constraint', value, row, col, candidates: this.getCandidates(cell), cage, remainingSum, emptyCount: emptyCellsInCage.length };
+                }
+            }
+        }
+
+        // 兜底：选候选数最少的格子，仍然给出推理提示而非直接揭示
+        let bestCell = emptyCells[0];
+        let bestCount = 10;
+        for (const cell of emptyCells) {
+            const c = this.getCandidates(cell).length;
+            if (c > 0 && c < bestCount) {
+                bestCount = c;
+                bestCell = cell;
+            }
+        }
+        const row = Math.floor(bestCell / 9);
+        const col = bestCell % 9;
         return {
-            cell: randomCell,
+            cell: bestCell,
             type: 'general',
-            value: this.solution[randomCell],
+            value: this.solution[bestCell],
             row,
             col,
-            candidates: this.getCandidates(randomCell)
+            candidates: this.getCandidates(bestCell)
         };
+    }
+
+    findCageCombinations(cellCandidates, index, current, currentSum, targetSum, usedNums, results) {
+        if (index === cellCandidates.length) {
+            if (currentSum === targetSum) {
+                results.push([...current]);
+            }
+            return;
+        }
+        if (currentSum >= targetSum) return;
+        if (results.length >= 100) return; // 防止组合爆炸
+
+        for (const num of cellCandidates[index].candidates) {
+            if (usedNums.has(num)) continue;
+            if (current.includes(num)) continue;
+            if (currentSum + num > targetSum) continue;
+
+            current.push(num);
+            usedNums.add(num);
+            this.findCageCombinations(cellCandidates, index + 1, current, currentSum + num, targetSum, usedNums, results);
+            usedNums.delete(num);
+            current.pop();
+        }
     }
 
     getCandidates(index) {
@@ -1084,6 +1195,27 @@ class SudokuGame {
                     <span class="hint-step-number">2</span>
                     <span class="hint-step-text">
                         在第 <span class="hint-highlight-text">${boxNum}</span> 宫中，有一个数字只能填在这个位置
+                    </span>
+                </div>`;
+            } else if (hintInfo.type === 'cage_last_cell') {
+                html += `<div class="hint-step">
+                    <span class="hint-step-number">2</span>
+                    <span class="hint-step-text">
+                        这个笼子只剩最后一个空格，用目标和减去已填数字即可得出答案
+                    </span>
+                </div>`;
+            } else if (hintInfo.type === 'cage_hidden_single') {
+                html += `<div class="hint-step">
+                    <span class="hint-step-number">2</span>
+                    <span class="hint-step-text">
+                        在这个笼子中，数字 <span class="hint-highlight-text">${hintInfo.value}</span> 只能填在这个位置（其他空格因行/列/宫约束无法放置）
+                    </span>
+                </div>`;
+            } else if (hintInfo.type === 'cage_sum_constraint') {
+                html += `<div class="hint-step">
+                    <span class="hint-step-number">2</span>
+                    <span class="hint-step-text">
+                        这个笼子剩余 <span class="hint-highlight-text">${hintInfo.emptyCount}</span> 格需要凑出 <span class="hint-highlight-text">${hintInfo.remainingSum}</span>，结合行列宫约束，这个格子只能填 <span class="hint-highlight-text">${hintInfo.value}</span>
                     </span>
                 </div>`;
             } else {
