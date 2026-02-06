@@ -301,21 +301,47 @@ class SudokuGame {
 
     generateKillerPuzzle() {
         // 生成杀手数独
-        // 1. 先生成完整解
+        if (this.difficulty === 'expert') {
+            // 专家模式：不预填任何数字，纯靠笼子约束推理
+            // 反复生成笼子布局直到找到有唯一解的
+            for (let attempt = 0; attempt < 50; attempt++) {
+                this.solution = this.generateSolution();
+                this.generateRandomCages('expert');
+
+                // 验证空盘 + 笼子约束是否有唯一解
+                const testBoard = Array(81).fill(0);
+                if (this.hasUniqueSolutionKiller(testBoard)) {
+                    this.board = Array(81).fill(0);
+                    this.initialBoard = Array(81).fill(0);
+                    return;
+                }
+            }
+            // 兜底：如果多次尝试都找不到纯笼子唯一解，降级为少量提示
+            this.board = Array(81).fill(0);
+            this.initialBoard = Array(81).fill(0);
+            const positions = Array.from({ length: 81 }, (_, i) => i);
+            this.shuffle(positions);
+            for (let i = 0; i < positions.length; i++) {
+                const pos = positions[i];
+                this.board[pos] = this.solution[pos];
+                this.initialBoard[pos] = this.solution[pos];
+                if (this.hasUniqueSolutionKiller(this.board)) {
+                    return;
+                }
+            }
+            return;
+        }
+
+        // 非专家模式：从满盘逐个移除数字并验证唯一解
         this.solution = this.generateSolution();
         this.board = [...this.solution];
         this.initialBoard = [...this.solution];
-
-        // 2. 动态生成不规则笼子布局
         this.generateRandomCages();
 
-        // 3. 逐个移除数字，每次移除后验证唯一解
-        // 笼子约束提供额外信息，因此可以比经典模式移除更多数字
         const killerRemoveCount = {
             easy: 48,
             medium: 56,
-            hard: 64,
-            expert: 72
+            hard: 64
         };
 
         const removeCount = killerRemoveCount[this.difficulty] || 48;
@@ -338,10 +364,14 @@ class SudokuGame {
         }
     }
 
-    generateRandomCages() {
+    generateRandomCages(mode) {
         this.cages = [];
         const visited = new Set();
-        const cellToCage = new Map(); // 方便后续渲染颜色
+
+        // 专家模式使用更小的笼子以提供更强约束
+        const sizeWeights = mode === 'expert'
+            ? [1, 1, 2, 2, 2, 2, 3, 3, 3, 4]
+            : [1, 2, 2, 2, 3, 3, 3, 4, 4, 5];
 
         // 遍历所有格子，确保每个格子都被分配到笼子
         for (let i = 0; i < 81; i++) {
@@ -352,7 +382,7 @@ class SudokuGame {
 
             // 随机决定该笼子的大小 (1-5格)
             // 权重控制：更倾向于 2, 3, 4 格
-            const targetSize = this.weightedRandom([1, 2, 2, 2, 3, 3, 3, 4, 4, 5]);
+            const targetSize = this.weightedRandom(sizeWeights);
             
             // 尝试扩张笼子
             let attempts = 0;
