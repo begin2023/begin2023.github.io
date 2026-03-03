@@ -459,6 +459,11 @@
     color: #fff;
 }
 
+.action-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .btn-icon {
     font-size: 1rem;
 }
