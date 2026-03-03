@@ -205,6 +205,11 @@ class SudokuGame {
             hintBtn.addEventListener('click', () => this.showHint());
         }
 
+        const markCandidatesBtn = document.getElementById('markCandidatesBtn');
+        if (markCandidatesBtn) {
+            markCandidatesBtn.addEventListener('click', () => this.markAllCandidates());
+        }
+
         const hintClose = document.getElementById('hintClose');
         if (hintClose) {
             hintClose.addEventListener('click', () => this.closeHint());
@@ -269,9 +274,19 @@ class SudokuGame {
         } else {
             this.generateClassicPuzzle();
         }
+        this.updateCandidateButtonState();
         this.renderBoard();
         this.updateStats();
         this.startTimer();
+    }
+
+    updateCandidateButtonState() {
+        const markCandidatesBtn = document.getElementById('markCandidatesBtn');
+        if (!markCandidatesBtn) return;
+
+        const isClassic = this.gameMode === 'classic';
+        markCandidatesBtn.disabled = !isClassic;
+        markCandidatesBtn.title = isClassic ? '标记所有空格的候选数字' : '仅经典模式可用';
     }
 
     generateClassicPuzzle() {
@@ -756,6 +771,33 @@ class SudokuGame {
                 this.notes[r * 9 + c].delete(num);
             }
         }
+    }
+
+    markAllCandidates() {
+        if (this.gameOver || this.gameMode !== 'classic') return;
+
+        for (let i = 0; i < 81; i++) {
+            if (this.board[i] === 0) {
+                const correctCandidates = new Set(this.getCandidates(i));
+
+                if (this.notes[i].size === 0) {
+                    // 该格还没有笔记时，直接补全候选数
+                    this.notes[i] = correctCandidates;
+                } else {
+                    // 该格已有笔记时，只删掉错误候选，保留玩家正确填写的候选
+                    for (const note of Array.from(this.notes[i])) {
+                        if (!correctCandidates.has(note)) {
+                            this.notes[i].delete(note);
+                        }
+                    }
+                }
+            } else {
+                this.notes[i].clear();
+            }
+        }
+
+        this.soundManager.playHint();
+        this.renderBoard();
     }
 
     undo() {
