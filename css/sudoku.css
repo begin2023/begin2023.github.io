@@ -1,7 +1,7 @@
 /* 数独游戏样式 - 适配 PaperMod 主题 */
 
 .sudoku-container {
-    max-width: 420px; /* 默认移动端尺寸 */
+    max-width: 460px; /* 默认移动端尺寸（略放大棋盘） */
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -30,7 +30,7 @@
     }
 
     .sudoku-main {
-        max-width: 600px;
+        max-width: 640px;
         width: 100%;
         justify-self: center;
     }
@@ -348,22 +348,22 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
+    gap: 0;
     width: 100%;
     height: 100%;
     position: absolute;
     top: 0;
     left: 0;
-    /* 调整 padding，因为现在格子大了，笼子和有背景色了，视觉上更像边框 */
-    padding: 2px; 
+    padding: 1px;
     box-sizing: border-box;
 }
 
-/* 杀手数独模式下的笔记偏移 - 也可以通过 JS 动态添加类来实现更精细控制，
-   但这里利用 grid 布局特性，如果第一个格子被遮挡，我们可以尝试让整个 grid 稍微避让，
-   或者相信增大后的格子足以容纳。
-   更稳妥的方式是让 notes 整体 margin-top 一点点 */
-.sudoku-cell .notes {
-    padding-top: 12px; /* 稍微下移，避开左上角的 cage-sum */
+/* 仅杀手模式格子需要给左上角 cage-sum 留空间 */
+.sudoku-cell.cage-top .notes,
+.sudoku-cell.cage-bottom .notes,
+.sudoku-cell.cage-left .notes,
+.sudoku-cell.cage-right .notes {
+    padding-top: 10px;
     padding-left: 2px;
 }
 
@@ -371,9 +371,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(0.35rem, 1.2vw, 0.5rem); /* 随格子增大稍微调大 */
-    color: var(--secondary);
-    font-weight: 600;
+    font-size: clamp(0.5rem, 1.5vw, 0.72rem);
+    color: var(--content);
+    font-weight: 700;
     line-height: 1;
     overflow: hidden;
 }
@@ -924,7 +924,7 @@
     }
 
     .sudoku-cell .note {
-        font-size: 0.35rem;
+        font-size: 0.5rem;
     }
 
     .number-pad {
